@@ -48,10 +48,10 @@ services:
       TZ: ${TZ:-Europe/Madrid}
       DB_HOST: mariadb
       DB_PORT: 3306
-      DB_DATABASE: ${MARIADB_DATABASE:-app}
-      DB_USERNAME: ${MARIADB_USER:-app}
-      DB_PASSWORD: ${MARIADB_PASSWORD}
-      DB_ALLOW_EMPTY_PASSWORD: ${MARIADB_ALLOW_EMPTY_PASSWORD:-no}
+      DB_DATABASE: ${DB_DATABASE:-app}
+      DB_USERNAME: ${DB_USER:-app}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_ALLOW_EMPTY_PASSWORD: ${DB_ALLOW_EMPTY_PASSWORD:-no}
     depends_on:
       mariadb:
         condition: service_healthy
@@ -72,11 +72,12 @@ services:
     restart: "${DOCKER_RESTART_POLICY:-unless-stopped}"
     logging: *default-logging
     environment:
-      TZ: ${TZ:-Europe/Madrid}
-      MARIADB_DATABASE: ${MARIADB_DATABASE:-app_db}
-      MARIADB_USER: ${MARIADB_USER:-ca_user}
-      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
-      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      TZ: ${TZ:-Europe/London}
+      MARIADB_DATABASE: ${DB_DATABASE:-app_db}
+      MARIADB_USER: ${DB_USER:-ca_user}
+      MARIADB_PASSWORD: ${DB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
+      DB_ALLOW_EMPTY_PASSWORD: ${DB_ALLOW_EMPTY_PASSWORD:-no}
     volumes:
       - mariadb_data:/var/lib/mysql
     healthcheck:
@@ -116,12 +117,12 @@ services:
     ports:
       - "${POSTGRES_PORT:-5432}:5432"
     environment:
-      POSTGRES_DB: "${DB_NAME}"
+      POSTGRES_DB: "${DB_DATABASE}"
       POSTGRES_USER: "${DB_USER}"
-      POSTGRES_PASSWORD: "${DB_USER_PASSWORD}"
+      POSTGRES_PASSWORD: "${DB_PASSWORD}"
       PGDATA: /var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      test: ["CMD", "pg_isready -U ${DB_USER} -d ${DB_DATABASE}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -139,7 +140,7 @@ services:
       - "${PGADMIN_PORT:-8081}:8080"
     environment:
       PGADMIN_DEFAULT_EMAIL: "${DB_EMAIL}"
-      PGADMIN_DEFAULT_PASSWORD: "${DB_USER_PASSWORD}"
+      PGADMIN_DEFAULT_PASSWORD: "${DB_PASSWORD}"
       PGADMIN_LISTEN_PORT: 8080
       PGADMIN_CONFIG_ENHANCED_COOKIE_PROTECTION: "True"
     depends_on:
