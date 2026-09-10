@@ -1,0 +1,298 @@
+# ============================================================
+# Environment / secrets
+# ============================================================
+
+.env
+.env.*
+!.env.example
+!.env.dist
+
+# Local secrets / credentials
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+*.secret
+
+
+# ============================================================
+# Docker
+# ============================================================
+
+# Docker volumes / persistent data
+docker-data/
+docker-data/**
+data/
+data/**
+volumes/
+volumes/**
+
+# Local Docker overrides
+docker-compose.override.yml
+docker-compose.local.yml
+
+# Docker logs
+*.log
+logs/
+logs/**
+
+# Docker temporary files
+.docker/
+docker-tmp/
+docker-cache/
+
+
+# ============================================================
+# PHP
+# ============================================================
+
+# PHPUnit
+.phpunit.result.cache
+.phpunit.cache
+phpunit.xml
+phpunit.xml.dist
+/app/phpunit.xml
+/phpunit.xml
+
+# PHP build / generated files
+build/
+build/**
+dist/
+dist/**
+
+# PHPStan / Psalm / static analysis caches
+.phpstan.cache
+.phpstan/
+.psalm/
+.psalm-cache/
+
+# PHP CS Fixer
+.php-cs-fixer.cache
+
+# Rector
+.rector/
+.rector-cache/
+
+# Symfony cache (if applicable)
+var/cache/
+var/log/
+var/sessions/
+
+
+# ============================================================
+# Composer
+# ============================================================
+
+# Usually KEEP vendor/ out of Git
+/vendor/
+/vendor/**
+
+# Composer cache
+.composer-cache/
+
+# Composer local files
+auth.json
+
+
+# ============================================================
+# Nginx
+# ============================================================
+
+# Nginx logs
+nginx/logs/
+nginx/logs/**
+nginx/*.log
+
+# Temporary Nginx files
+nginx/tmp/
+nginx/cache/
+
+
+# ============================================================
+# MariaDB / MySQL
+# ============================================================
+
+# Database data directories
+mysql/
+mysql/**
+mariadb/
+mariadb/**
+db-data/
+db-data/**
+database-data/
+database-data/**
+
+# Database dumps generated locally
+*.sql.gz
+*.dump
+*.bak
+
+# Ignore SQL dumps unless explicitly tracked
+# Uncomment if you NEVER want dumps in Git:
+# *.sql
+
+
+# ============================================================
+# phpMyAdmin
+# ============================================================
+
+phpmyadmin/tmp/
+phpmyadmin/upload/
+phpmyadmin/save/
+
+
+# ============================================================
+# Temporary / cache files
+# ============================================================
+
+*.tmp
+*.temp
+*.cache
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+tmp/
+temp/
+cache/
+
+
+# ============================================================
+# IDEs / Editors
+# ============================================================
+
+# VS Code
+.vscode/*
+
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/*.code-snippets
+
+# JetBrains
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Visual Studio
+.vs/
+*.user
+*.userosscache
+*.suo
+
+# Eclipse
+.project
+.classpath
+.settings/
+
+
+# ============================================================
+# History / editor metadata
+# ============================================================
+
+.history/
+.history
+.ionide/
+
+*.vsix
+
+
+# ============================================================
+# OS generated files
+# ============================================================
+
+.DS_Store
+.AppleDouble
+.LSOverride
+
+Icon?
+
+._*
+
+.Spotlight-V100
+.Trashes
+.fseventsd
+
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+
+# ============================================================
+# Coverage / testing
+# ============================================================
+
+coverage/
+coverage/**
+.coverage
+.clover.xml
+
+.phpunit.cache
+.phpunit.result.cache
+
+
+# ============================================================
+# Node.js (if frontend/assets are used)
+# ============================================================
+
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+.npm/
+.yarn/
+.pnpm-store/
+
+# Build artifacts
+.nyc_output/
+.next/
+.nuxt/
+dist/
+
+
+# ============================================================
+# Application runtime files
+# ============================================================
+
+runtime/
+runtime/**
+storage/logs/
+storage/cache/
+storage/tmp/
+
+*.pid
+*.seed
+
+
+# ============================================================
+# Backup files
+# ============================================================
+
+*.bak
+*.backup
+*.old
+*.orig
+*.save
+
+# Backup directories
+backup/
+backups/
+
+
+# ============================================================
+# Local configuration
+# ============================================================
+
+*.local
+*.local.php
+config.local.php
+config/*.local.php

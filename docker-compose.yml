@@ -1,0 +1,124 @@
+networks:
+  server-network:
+    driver: bridge
+
+services:
+  webserver:
+    image: nginx:alpine
+    container_name: ${WEBSERVER_CONTAINER_NAME:-romero_webserver}
+    restart: unless-stopped
+    volumes:
+      - ./sites/app:/usr/share/nginx/html:ro
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
+
+    depends_on:
+      php:
+        condition: service_healthy
+
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/healthz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+    networks:
+      - server-network
+
+  php:
+    build:
+      context: .
+      dockerfile: php/Dockerfile
+    image: app-php:8.4
+    container_name: ${PHP_CONTAINER_NAME:-romero_php}
+    restart: unless-stopped
+    working_dir: /usr/share/nginx/html
+    volumes:
+      - ./sites:/usr/share/nginx/html:ro
+      - ./storage:/var/www/storage
+    environment:
+      TZ: ${TZ:-Europe/Madrid}
+      DB_HOST: mariadb
+      DB_PORT: 3306
+      DB_DATABASE: ${MARIADB_DATABASE:-app}
+      DB_USERNAME: ${MARIADB_USER:-app}
+      DB_PASSWORD: ${MARIADB_PASSWORD}
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "php-fpm -t"]
+      interval: 20s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+    networks:
+      - server-network
+
+  mariadb:
+    image: mariadb:11.8
+    container_name: ${MARIADB_CONTAINER_NAME:-romero_mariadb}
+    restart: unless-stopped
+    environment:
+      TZ: ${TZ:-Europe/Madrid}
+      MARIADB_DATABASE: ${MARIADB_DATABASE:-app_db}
+      MARIADB_USER: ${MARIADB_USER:-ca_user}
+      MARIADB_PASSWORD: ${MARIADB_PASSWORD}
+      MARIADB_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - server-network
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: ${PHPMYADMIN_CONTAINER_NAME:-romero_phpmyadmin}
+    restart: unless-stopped
+    environment:
+      PMA_HOST: mariadb
+      PMA_PORT: 3306
+      PMA_ARBITRARY: 0
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - "${PHPMYADMIN_PORT:-8080}:80"
+    networks:
+      - server-network
+
+  proxy_https:
+    image: nginx:alpine
+    container_name: ${PROXY_CONTAINER_NAME:-romero_webserver_proxy_https}
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./nginx/certs:/etc/nginx/certs:ro
+      - ./nginx/proxy.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      webserver:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget --no-check-certificate -qO- https://127.0.0.1/ || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    networks:
+      - server-network
+
+volumes:
+  mariadb_data:
+    driver: local
