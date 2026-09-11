@@ -9,49 +9,50 @@ Este proyecto utiliza Docker Compose para levantar un entorno local con:
 - Un Nginx adicional como reverse proxy HTTPS.
 - Certificados locales generados con `mkcert`.
 - Dominios locales resueltos mediante el fichero `hosts`.
+- Un `Makefile` con atajos para las tareas habituales de desarrollo.
 
 > **Nota para mi yo del futuro:** si algo deja de funcionar después de tocar volúmenes, Nginx o HTTPS, revisar primero este documento antes de desmontar medio Docker.
 
 ---
 
-## 1. Estructura general
+# 1. Estructura general
 
 La arquitectura actual es:
 
 ```text
                          HTTPS :443
-                             │
-                             ▼
-                  ┌─────────────────────┐
-                  │     proxy_https      │
-                  │       Nginx         │
-                  │                     │
-                  │ TLS / certificados │
-                  │ HTTP → HTTPS        │
-                  └──────────┬──────────┘
-                             │
-                             │ HTTP :80
-                             ▼
-                  ┌─────────────────────┐
-                  │      webserver      │
-                  │       Nginx         │
-                  │                     │
-                  │ static + FastCGI   │
-                  └──────────┬──────────┘
-                             │
-                             │ FastCGI :9000
-                             ▼
-                  ┌─────────────────────┐
-                  │         php         │
-                  │      PHP-FPM 8.4    │
-                  └──────────┬──────────┘
-                             │
-                             │ MySQL :3306
-                             ▼
-                  ┌─────────────────────┐
-                  │       mariadb       │
-                  │      MariaDB 11.8   │
-                  └─────────────────────┘
+                              │
+                              ▼
+                    ┌─────────────────────┐
+                    │     proxy_https      │
+                    │       Nginx         │
+                    │                     │
+                    │ TLS / certificados  │
+                    │ HTTP → HTTPS        │
+                    └──────────┬──────────┘
+                               │
+                               │ HTTP :80
+                               ▼
+                    ┌─────────────────────┐
+                    │      webserver      │
+                    │       Nginx         │
+                    │                     │
+                    │ static + FastCGI   │
+                    └──────────┬──────────┘
+                               │
+                               │ FastCGI :9000
+                               ▼
+                    ┌─────────────────────┐
+                    │         php         │
+                    │      PHP-FPM 8.4    │
+                    └──────────┬──────────┘
+                               │
+                               │ MySQL :3306
+                               ▼
+                    ┌─────────────────────┐
+                    │       mariadb       │
+                    │      MariaDB 11.8   │
+                    └─────────────────────┘
 ```
 
 phpMyAdmin se conecta directamente a `mariadb`.
@@ -60,22 +61,42 @@ phpMyAdmin se conecta directamente a `mariadb`.
 
 # 2. Dominios locales
 
-El entorno está pensado para trabajar con dominios locales, por ejemplo:
+El entorno utiliza como dominio base:
+
+```text
+app.test
+```
+
+También se puede utilizar cualquier subdominio cubierto por el certificado wildcard:
 
 ```text
 app.test
 www.app.test
+api.app.test
+admin.app.test
 ```
 
-También se puede utilizar otro dominio de pruebas si se cambia de forma coherente en:
+La configuración principal del proyecto utiliza:
+
+```text
+app.test
+*.app.test
+```
+
+Si se cambia el dominio base, hay que actualizar de forma coherente:
 
 - `.env`
 - `nginx/default.conf`
 - `nginx/proxy.conf`
-- `/etc/hosts`
-- certificados generados con `mkcert`
+- `/etc/hosts` o el fichero `hosts` de Windows
+- certificados HTTPS
+- configuración del `Makefile` si se quiere cambiar el valor por defecto
 
-La idea es que el navegador resuelva el dominio hacia `127.0.0.1`, pero que HTTPS sea válido mediante un certificado local confiable.
+El `Makefile` permite sobrescribir el dominio sin modificarlo:
+
+```bash
+make setup BASE_DOMAIN=example.test
+```
 
 ---
 
@@ -83,7 +104,7 @@ La idea es que el navegador resuelva el dominio hacia `127.0.0.1`, pero que HTTP
 
 Docker no se encarga de resolver los dominios `.test` hacia localhost desde el navegador.
 
-Hay que añadirlos al fichero `hosts` de la máquina anfitriona.
+Hay que añadir el dominio al fichero `hosts` de la máquina anfitriona.
 
 ## Linux / macOS
 
@@ -93,11 +114,20 @@ Editar:
 /etc/hosts
 ```
 
-Por ejemplo:
+Añadir:
+
+```text
+127.0.0.1 app.test
+::1       app.test
+```
+
+Si se utilizan subdominios, no es necesario añadirlos individualmente si el certificado los cubre; sin embargo, el sistema operativo debe resolverlos. La forma más sencilla es añadirlos explícitamente:
 
 ```text
 127.0.0.1 app.test
 127.0.0.1 www.app.test
+127.0.0.1 api.app.test
+127.0.0.1 admin.app.test
 ```
 
 ## Windows
@@ -108,11 +138,20 @@ Editar como administrador:
 C:\Windows\System32\drivers\etc\hosts
 ```
 
-Y añadir:
+Añadir:
+
+```text
+127.0.0.1 app.test
+::1       app.test
+```
+
+Para subdominios:
 
 ```text
 127.0.0.1 app.test
 127.0.0.1 www.app.test
+127.0.0.1 api.app.test
+127.0.0.1 admin.app.test
 ```
 
 Comprobar después:
@@ -151,60 +190,482 @@ El dominio `.test` está reservado para pruebas/documentación y evita depender 
 
 ---
 
-# 5. Certificados HTTPS con mkcert
+# 5. Primera instalación
 
-Para tener HTTPS local sin avisos de certificado del navegador se utiliza `mkcert`.
-
-La primera vez hay que instalar la CA local:
+La forma recomendada de preparar el proyecto por primera vez es utilizar el `Makefile`:
 
 ```bash
-mkcert -install
+make setup
 ```
 
-Después se puede generar un certificado para el dominio de desarrollo.
+Este comando prepara automáticamente:
+
+1. Permisos de los scripts.
+2. Directorios necesarios.
+3. Certificados HTTPS locales.
+4. Build de las imágenes Docker.
+5. Arranque de los contenedores.
+
+El flujo está pensado para que la primera instalación requiera el mínimo de configuración manual posible.
+
+Al finalizar, se muestra:
+
+```text
+=================================================================
+ Docker-Nginx-PHP is ready!
+
+ Remember to add these lines to your hosts file:
+   127.0.0.1 app.test
+   ::1       app.test
+
+ Application available at:
+   https://app.test
+=================================================================
+```
+
+Después de añadir el dominio al fichero `hosts`, la aplicación estará disponible en:
+
+```text
+https://app.test
+```
+
+> El `Makefile` es la interfaz recomendada para las tareas habituales del proyecto. Los comandos directos de `docker compose` siguen siendo válidos cuando sea necesario realizar alguna operación específica.
+
+---
+
+# 6. Makefile — comandos rápidos
+
+El proyecto incluye un `Makefile` para simplificar las tareas habituales de Docker, PHP, Nginx y certificados HTTPS.
+
+Para consultar todos los comandos disponibles:
+
+```bash
+make help
+```
+
+Si no se especifica ningún target, `make` muestra la ayuda:
+
+```bash
+make
+```
+
+## 6.1. Setup
+
+Primera instalación:
+
+```bash
+make setup
+```
+
+Preparar los directorios:
+
+```bash
+make init-dirs
+```
+
+Generar los certificados:
+
+```bash
+make certs
+```
+
+Comprobar certificados existentes:
+
+```bash
+make certs-check
+```
+
+Regenerar certificados:
+
+```bash
+make certs-force
+```
+
+---
+
+## 6.2. Docker Compose
+
+Levantar los contenedores en primer plano:
+
+```bash
+make up
+```
+
+Levantar en segundo plano:
+
+```bash
+make up-detached
+```
+
+Reconstruir imágenes y levantar:
+
+```bash
+make up-build
+```
+
+Parar contenedores:
+
+```bash
+make stop
+```
+
+Parar y eliminar contenedores:
+
+```bash
+make down
+```
+
+Iniciar contenedores existentes:
+
+```bash
+make start
+```
+
+Reiniciar:
+
+```bash
+make restart
+```
+
+Reconstruir y reiniciar forzando la recreación:
+
+```bash
+make restart-rebuild
+```
+
+Mostrar estado:
+
+```bash
+make ps
+```
+
+Mostrar procesos:
+
+```bash
+make top
+```
+
+---
+
+## 6.3. Build
+
+Construir las imágenes:
+
+```bash
+make build
+```
+
+Construir sin caché:
+
+```bash
+make build-nc
+```
+
+Descargar imágenes base:
+
+```bash
+make pull
+```
+
+Parar, reconstruir y volver a levantar:
+
+```bash
+make rebuild
+```
+
+---
+
+## 6.4. Logs
+
+Logs de todos los servicios:
+
+```bash
+make logs
+```
+
+Logs de Nginx:
+
+```bash
+make logs-nginx
+```
+
+Logs de PHP:
+
+```bash
+make logs-php
+```
+
+Últimas 100 líneas:
+
+```bash
+make logs-tail
+```
+
+---
+
+## 6.5. Acceso a los contenedores
+
+Shell del contenedor PHP:
+
+```bash
+make php
+```
+
+También disponible como:
+
+```bash
+make shell
+```
+
+Shell del contenedor Nginx:
+
+```bash
+make nginx
+```
+
+---
+
+## 6.6. PHP y Composer
+
+Versión de PHP:
+
+```bash
+make php-version
+```
+
+Extensiones instaladas:
+
+```bash
+make php-extensions
+```
+
+Instalar dependencias:
+
+```bash
+make composer-install
+```
+
+Actualizar dependencias:
+
+```bash
+make composer-update
+```
+
+Ejecutar Composer directamente:
+
+```bash
+make composer install
+```
 
 Por ejemplo:
 
 ```bash
-mkcert app.test "*.app.test"
+make composer require vendor/package
+```
+
+Los argumentos posteriores a `composer` se pasan al comando Composer dentro del contenedor PHP.
+
+---
+
+## 6.7. Diagnóstico
+
+Validar la configuración de Docker Compose:
+
+```bash
+make config
+```
+
+Listar las imágenes utilizadas:
+
+```bash
+make images
+```
+
+Mostrar estadísticas de los contenedores:
+
+```bash
+make stats
+```
+
+---
+
+## 6.8. Limpieza
+
+Eliminar contenedores detenidos y redes no utilizadas:
+
+```bash
+make clean
+```
+
+Eliminar las imágenes locales del proyecto:
+
+```bash
+make clean-images
+```
+
+Eliminar contenedores y volúmenes:
+
+```bash
+make destroy-volumes
+```
+
+Eliminar completamente contenedores, redes, imágenes y volúmenes:
+
+```bash
+make destroy
+```
+
+> **Cuidado:** los comandos `destroy-volumes` y `destroy` pueden eliminar datos persistentes almacenados en volúmenes Docker.
+
+---
+
+## 6.9. Reset completo
+
+Para reconstruir completamente el entorno:
+
+```bash
+make reset
+```
+
+Para realizar una instalación limpia:
+
+```bash
+make fresh
+```
+
+Estos comandos están pensados para situaciones en las que se necesita empezar de nuevo con el entorno Docker.
+
+---
+
+## 6.10. Resumen rápido
+
+| Necesidad | Comando |
+|---|---|
+| Primera instalación | `make setup` |
+| Ayuda | `make help` |
+| Levantar | `make up-detached` |
+| Levantar + build | `make up-build` |
+| Parar | `make stop` |
+| Eliminar contenedores | `make down` |
+| Reiniciar | `make restart` |
+| Estado | `make ps` |
+| Logs | `make logs` |
+| Logs Nginx | `make logs-nginx` |
+| Logs PHP | `make logs-php` |
+| Shell PHP | `make php` |
+| Shell Nginx | `make nginx` |
+| Build | `make build` |
+| Build sin caché | `make build-nc` |
+| Composer install | `make composer-install` |
+| Versión PHP | `make php-version` |
+| Generar certificados | `make certs` |
+| Comprobar certificados | `make certs-check` |
+| Regenerar certificados | `make certs-force` |
+| Reset completo | `make reset` |
+| Limpieza total | `make destroy` |
+
+---
+
+# 7. Certificados HTTPS con mkcert
+
+Para tener HTTPS local sin avisos de certificado del navegador se utiliza `mkcert`.
+
+La configuración por defecto genera un certificado para:
+
+```text
+app.test
+*.app.test
 ```
 
 Esto permite cubrir:
 
 ```text
 app.test
+www.app.test
+api.app.test
+admin.app.test
 foo.app.test
-bar.app.test
-...
 ```
 
-Si además se utiliza `www.app.test`, el wildcard `*.app.test` lo cubre.
-
-Una opción más explícita es:
-
-```bash
-mkcert app.test www.app.test "*.app.test"
-```
-
-Los ficheros generados se colocan en:
+El certificado incluye tanto el dominio base como el wildcard porque:
 
 ```text
-nginx/certs/
+*.app.test
+```
+
+no cubre por sí solo:
+
+```text
+app.test
+```
+
+## Generación automática
+
+La forma recomendada es:
+
+```bash
+make certs
+```
+
+Durante la primera instalación:
+
+```bash
+make setup
+```
+
+ya se ejecuta automáticamente este paso.
+
+El Makefile detecta Windows y ejecuta el script PowerShell:
+
+```text
+scripts/generate_certs.ps1
+```
+
+En Linux/macOS ejecuta:
+
+```text
+scripts/generate_certs.sh
+```
+
+Ambos scripts utilizan `mkcert` por defecto.
+
+Los certificados se almacenan en:
+
+```text
+docker/nginx/certs/
 ```
 
 Por ejemplo:
 
 ```text
-nginx/certs/
-├── app.test+2.pem
-└── app.test+2-key.pem
+docker/nginx/certs/
+├── app.test.crt
+└── app.test.key
 ```
 
-Los nombres reales dependen de cómo se haya ejecutado `mkcert`.
+Los nombres exactos dependerán de la ejecución del script.
+
+## Regenerar certificados
+
+Comprobar si existen:
+
+```bash
+make certs-check
+```
+
+Regenerarlos:
+
+```bash
+make certs-force
+```
+
+El comando `certs-force` elimina previamente los certificados del proyecto y vuelve a generarlos.
+
+> Los certificados y las claves privadas son archivos locales de desarrollo y no deben incluirse en el repositorio.
 
 ---
 
-# 6. Configuración de Nginx para HTTPS
+# 8. Configuración de Nginx para HTTPS
 
 El reverse proxy HTTPS utiliza los certificados montados en:
 
@@ -268,7 +729,7 @@ php:9000
 
 ---
 
-# 7. Volúmenes: IMPORTANTE
+# 9. Volúmenes: IMPORTANTE
 
 Este fue un problema importante durante la configuración.
 
@@ -314,7 +775,7 @@ porque entonces las rutas internas de Nginx y PHP dejan de coincidir.
 
 ---
 
-# 8. `root` de Nginx
+# 10. `root` de Nginx
 
 Con el volumen:
 
@@ -356,7 +817,7 @@ root /usr/share/nginx/html;
 
 ---
 
-# 9. PHP-FPM y SCRIPT_FILENAME
+# 11. PHP-FPM y SCRIPT_FILENAME
 
 La configuración actual utiliza:
 
@@ -392,7 +853,7 @@ o respuestas `404`.
 
 ---
 
-# 10. Healthchecks
+# 12. Healthchecks
 
 Hay dos healthchecks importantes.
 
@@ -404,7 +865,8 @@ El Nginx interno tiene:
 location = /healthz {
     access_log off;
     default_type text/plain;
-    return 200 "OK\n";
+    return 200 "OK
+";
 }
 ```
 
@@ -428,7 +890,8 @@ El reverse proxy también debe tener su propio endpoint:
 location = /healthz {
     access_log off;
     default_type text/plain;
-    return 200 "OK\n";
+    return 200 "OK
+";
 }
 ```
 
@@ -464,7 +927,7 @@ La solución es comprobar `/healthz`.
 
 ---
 
-# 11. Estructura recomendada
+# 13. Estructura recomendada
 
 La estructura aproximada del proyecto:
 
@@ -474,13 +937,21 @@ La estructura aproximada del proyecto:
 ├── .env.example
 ├── compose.yml
 ├── Dockerfile
+├── Makefile
+│
+├── docker/
+│   └── nginx/
+│       └── certs/
+│           ├── ...
+│           └── ...
 │
 ├── nginx/
 │   ├── default.conf
-│   ├── proxy.conf
-│   └── certs/
-│       ├── ...
-│       └── ...
+│   └── proxy.conf
+│
+├── scripts/
+│   ├── generate_certs.ps1
+│   └── generate_certs.sh
 │
 ├── php/
 │   └── Dockerfile
@@ -499,19 +970,19 @@ Añadir a `.gitignore`:
 
 ```gitignore
 .env
-nginx/certs/*
+docker/nginx/certs/*
 ```
 
-Si se quiere conservar un README o estructura:
+Si se quiere conservar la estructura:
 
 ```gitignore
-nginx/certs/*
-!nginx/certs/.gitkeep
+docker/nginx/certs/*
+!docker/nginx/certs/.gitkeep
 ```
 
 ---
 
-# 12. Variables `.env`
+# 14. Variables `.env`
 
 Ejemplo actual:
 
@@ -557,47 +1028,64 @@ ni dejar contraseñas vacías.
 
 ---
 
-# 13. Levantar el entorno
+# 15. Levantar el entorno
 
-Primera vez:
+## Primera vez
+
+Utilizar:
 
 ```bash
-docker compose up -d --build
+make setup
 ```
 
-Ver estado:
+Después añadir al fichero `hosts`:
 
-```bash
-docker compose ps
+```text
+127.0.0.1 app.test
+::1       app.test
 ```
 
-Ver logs:
+Y abrir:
 
-```bash
-docker compose logs -f
+```text
+https://app.test
 ```
 
-Ver logs únicamente de PHP:
+## Uso diario
+
+Levantar en segundo plano:
 
 ```bash
-docker compose logs -f php
+make up-detached
 ```
 
-Ver logs de Nginx:
+Ver el estado:
 
 ```bash
-docker compose logs -f webserver
+make ps
 ```
 
-Ver logs del proxy:
+Ver los logs:
 
 ```bash
-docker compose logs -f proxy_https
+make logs
+```
+
+Reconstruir cuando haya cambios en Docker:
+
+```bash
+make up-build
+```
+
+Parar:
+
+```bash
+make down
 ```
 
 ---
 
-# 14. Comprobaciones útiles
+# 16. Comprobaciones útiles
 
 Comprobar que PHP ve los ficheros:
 
@@ -643,7 +1131,7 @@ docker inspect --format='{{json .State.Health}}' webserver_proxy_https
 
 ---
 
-# 15. MySQL / MariaDB
+# 17. MySQL / MariaDB
 
 El perfil actual es:
 
@@ -682,7 +1170,7 @@ porque `mariadb` es el nombre DNS del servicio dentro de la red Docker.
 
 ---
 
-# 16. PostgreSQL
+# 18. PostgreSQL
 
 Existe también un perfil preparado:
 
@@ -694,7 +1182,7 @@ Pero antes de utilizarlo revisar el servicio PostgreSQL/pgAdmin del Compose.
 
 En la configuración inicial había algunas inconsistencias:
 
-### Nombre del servicio
+## Nombre del servicio
 
 El servicio es:
 
@@ -716,7 +1204,7 @@ depends_on:
   - postgresdb
 ```
 
-### Red
+## Red
 
 La red definida es:
 
@@ -736,7 +1224,7 @@ Debe utilizar:
 server-network
 ```
 
-### Volumen
+## Volumen
 
 Si se utiliza:
 
@@ -755,7 +1243,7 @@ Estos problemas no afectan al perfil MySQL.
 
 ---
 
-# 17. Flujo HTTPS completo
+# 19. Flujo HTTPS completo
 
 Cuando todo está correctamente configurado:
 
@@ -793,7 +1281,7 @@ Cuando todo está correctamente configurado:
 
 ---
 
-# 18. Si vuelve a aparecer un 404 de PHP
+# 20. Si vuelve a aparecer un 404 de PHP
 
 Comprobar en este orden:
 
@@ -851,9 +1339,15 @@ porque PHP-FPM está en otro contenedor.
 
 ---
 
-# 19. Si el proxy vuelve a aparecer como `unhealthy`
+# 21. Si el proxy vuelve a aparecer como `unhealthy`
 
 Primero mirar los logs:
+
+```bash
+make logs-nginx
+```
+
+o directamente:
 
 ```bash
 docker compose logs proxy_https
@@ -879,15 +1373,15 @@ Y el proxy debe tener:
 location = /healthz {
     access_log off;
     default_type text/plain;
-    return 200 "OK\n";
+    return 200 "OK
+";
 }
 ```
 
 Entonces:
 
 ```bash
-docker compose exec proxy_https \
-    wget --no-check-certificate -qO- https://127.0.0.1/healthz
+docker compose exec proxy_https     wget --no-check-certificate -qO- https://127.0.0.1/healthz
 ```
 
 debería devolver:
@@ -898,7 +1392,7 @@ OK
 
 ---
 
-# 20. Regla de oro
+# 22. Regla de oro
 
 Si algún día vuelvo a tocar los volúmenes de la aplicación:
 
@@ -908,6 +1402,7 @@ Actualmente:
 
 ```text
 HOST
+
 ./sites/app
    │
    ├───────────────┐
@@ -933,7 +1428,7 @@ y los volúmenes de ambos servicios.
 
 ---
 
-## Estado actual
+# 23. Estado actual
 
 - [x] Nginx interno funcionando.
 - [x] PHP-FPM funcionando.
@@ -946,5 +1441,8 @@ y los volúmenes de ambos servicios.
 - [x] Wildcard local mediante `*.app.test`.
 - [x] Healthcheck dedicado `/healthz`.
 - [x] Nginx y PHP compartiendo exactamente la misma raíz de aplicación.
+- [x] `Makefile` para simplificar las tareas habituales.
+- [x] Setup inicial automatizado mediante `make setup`.
+- [x] Generación automática de certificados en Windows y Linux/macOS.
 
 > Si algo falla después de un cambio: **revisar primero `hosts` → certificado `mkcert` → `server_name` → volúmenes → `root` → `SCRIPT_FILENAME` → healthchecks.**
