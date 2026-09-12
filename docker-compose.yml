@@ -55,6 +55,9 @@ services:
       DB_USERNAME: ${DB_USER:-app}
       DB_PASSWORD: ${DB_PASSWORD}
       DB_ALLOW_EMPTY_PASSWORD: ${DB_ALLOW_EMPTY_PASSWORD:-no}
+      APP_DOMAIN: ${APP_DOMAIN}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_LOCALE: ${APP_LOCALE:-en}
     depends_on:
       mariadb:
         condition: service_healthy

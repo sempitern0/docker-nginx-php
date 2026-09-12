@@ -32,7 +32,6 @@ RUN { \
         echo 'opcache.interned_strings_buffer=16'; \
         echo 'opcache.max_accelerated_files=10000'; \
         echo 'opcache.validate_timestamps=1'; \
-        echo 'opcache.revalidate_freq=0'; \
         echo 'opcache.save_comments=1'; \
     } > /usr/local/etc/php/conf.d/10-opcache.ini
 
@@ -57,11 +56,12 @@ RUN { \
         echo 'session.use_only_cookies = 1'; \
     } > /usr/local/etc/php/conf.d/99-security.ini
 
+WORKDIR /usr/share/nginx/html
+COPY sites /usr/share/nginx/html
+
 RUN php -m | grep -q '^PDO$' \
     && php -m | grep -q '^pdo_mysql$' \
     && php -m | grep -q '^pdo_pgsql$' \
     && php -r 'exit(in_array("mysql", PDO::getAvailableDrivers(), true) && in_array("pgsql", PDO::getAvailableDrivers(), true) ? 0 : 1);'
-
-WORKDIR /usr/share/nginx/html
 
 CMD ["php-fpm", "-F"]
