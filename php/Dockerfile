@@ -1,8 +1,11 @@
 FROM php:8.4-fpm-alpine
 
+RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
-RUN apk add --no-cache tzdata \
-    && docker-php-ext-install -j"$(nproc)" pdo_mysql \
+RUN apk add --no-cache tzdata libpq \
+    && apk add --no-cache --virtual .build-deps postgresql-dev \
+    && docker-php-ext-install -j"$(nproc)" pdo_mysql pdo_pgsql pgsql \
+    && apk del .build-deps \
     && docker-php-ext-enable opcache
 
 RUN { \
@@ -24,18 +27,40 @@ RUN { \
 
 RUN { \
         echo 'opcache.enable=1'; \
-        echo 'opcache.enable_cli=1'; \
+        echo 'opcache.enable_cli=0'; \
         echo 'opcache.memory_consumption=128'; \
         echo 'opcache.interned_strings_buffer=16'; \
         echo 'opcache.max_accelerated_files=10000'; \
         echo 'opcache.validate_timestamps=1'; \
-        echo 'opcache.revalidate_freq=2'; \
+        echo 'opcache.revalidate_freq=0'; \
         echo 'opcache.save_comments=1'; \
     } > /usr/local/etc/php/conf.d/10-opcache.ini
 
+RUN { \
+        echo 'expose_php = Off'; \
+        echo 'display_errors = Off'; \
+        echo 'display_startup_errors = Off'; \
+        echo 'log_errors = On'; \
+        echo 'error_reporting = E_ALL'; \
+        echo 'allow_url_fopen = Off'; \
+        echo 'allow_url_include = Off'; \
+        echo 'disable_functions = exec,passthru,shell_exec,system,proc_open,popen,parse_ini_file,show_source'; \
+        echo 'max_execution_time = 30'; \
+        echo 'max_input_time = 60'; \
+        echo 'memory_limit = 128M'; \
+        echo 'post_max_size = 12M'; \
+        echo 'upload_max_filesize = 10M'; \
+        echo 'session.cookie_httponly = 1'; \
+        echo 'session.cookie_secure = 1'; \
+        echo 'session.cookie_samesite = Lax'; \
+        echo 'session.use_strict_mode = 1'; \
+        echo 'session.use_only_cookies = 1'; \
+    } > /usr/local/etc/php/conf.d/99-security.ini
+
 RUN php -m | grep -q '^PDO$' \
     && php -m | grep -q '^pdo_mysql$' \
-    && php -r 'exit(in_array("mysql", PDO::getAvailableDrivers(), true) ? 0 : 1);'
+    && php -m | grep -q '^pdo_pgsql$' \
+    && php -r 'exit(in_array("mysql", PDO::getAvailableDrivers(), true) && in_array("pgsql", PDO::getAvailableDrivers(), true) ? 0 : 1);'
 
 WORKDIR /usr/share/nginx/html
 
