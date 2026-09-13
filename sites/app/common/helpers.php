@@ -1,0 +1,61 @@
+<?php
+
+declare(strict_types=1);
+
+function config(?string $key = null, mixed $default = null): mixed
+{
+    static $config = null;
+
+    if ($config === null) {
+        $path = dirname(__DIR__) . '/config/config.php';
+        $config = file_exists($path) ? require $path : [];
+
+        if (!is_array($config)) {
+            $config = [];
+        }
+    }
+
+    if ($key === null) {
+        return $config;
+    }
+
+    $array = $config;
+
+    foreach (explode('.', $key) as $segment) {
+        if (is_array($array) && array_key_exists($segment, $array)) {
+            $array = $array[$segment];
+        } else {
+            return $default;
+        }
+    }
+
+    return $array;
+}
+
+function redirect(string $path, int $status = 302): never
+{
+    $allowedStatuses = [301, 302, 303, 307, 308];
+
+    if (!in_array($status, $allowedStatuses, true)) {
+        throw new InvalidArgumentException('Código HTTP de redirección no permitido.');
+    }
+
+    if (preg_match('/[\r\n\x00-\x1F\x7F]/', $path)) {
+        throw new InvalidArgumentException('La redirección contiene caracteres de control.');
+    }
+
+    $path = trim($path);
+
+    if ($path === '' || str_starts_with($path, '//')) {
+        throw new InvalidArgumentException('Destino de redirección inválido.');
+    }
+
+    if (preg_match('~^[a-z][a-z0-9+.-]*://~i', $path)) {
+        throw new InvalidArgumentException('redirect() no admite destinos externos.');
+    }
+
+    $location = url($path);
+
+    header("Location: $location", true, $status);
+    exit;
+}
