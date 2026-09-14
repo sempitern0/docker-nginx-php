@@ -56,7 +56,7 @@ function complete_mfa_login(int $userId): bool
 
     $clearLock = db()->prepare(
         'UPDATE users
-         SET failed_attempts = 0, locked_until = NULL, last_login_at = NOW()
+         SET failed_login_attempts = 0, locked_until = NULL, last_login_at = NOW()
          WHERE id = ?'
     );
 
@@ -82,7 +82,7 @@ function login_user(string $username, string $password): string|bool
             password_hash,
             is_active,
             email_verified_at,
-            failed_attempts,
+            failed_login_attempts,
             locked_until,
             mfa_enabled,
             mfa_secret,
@@ -147,7 +147,7 @@ function login_user(string $username, string $password): string|bool
 
         try {
             $lockStmt = $pdo->prepare(
-                'SELECT failed_attempts
+                'SELECT failed_login_attempts
                  FROM users
                  WHERE id = ?
                  FOR UPDATE'
@@ -156,7 +156,7 @@ function login_user(string $username, string $password): string|bool
             $lockStmt->execute([(int)$u['id']]);
             $current = $lockStmt->fetch();
 
-            $attempts = ((int)($current['failed_attempts'] ?? 0)) + 1;
+            $attempts = ((int)($current['failed_login_attempts'] ?? 0)) + 1;
             $locked = $attempts >= $maxAttempts;
 
             if ($locked) {
@@ -166,7 +166,7 @@ function login_user(string $username, string $password): string|bool
 
                 $sql = sprintf(
                     'UPDATE users
-                     SET failed_attempts = ?,
+                     SET failed_login_attempts = ?,
                          locked_until = ?
                      WHERE id = ?',
                     $lockoutMins,
@@ -179,7 +179,7 @@ function login_user(string $username, string $password): string|bool
             } else {
                 $update = $pdo->prepare(
                     'UPDATE users
-                     SET failed_attempts = ?, locked_until = NULL
+                     SET failed_login_attempts = ?, locked_until = NULL
                      WHERE id = ?'
                 );
                 $update->execute([$attempts, (int)$u['id']]);
@@ -259,7 +259,7 @@ function login_user(string $username, string $password): string|bool
 
     $clearLock = db()->prepare(
         'UPDATE users
-         SET failed_attempts = 0, locked_until = NULL, last_login_at = NOW()
+         SET failed_login_attempts = 0, locked_until = NULL, last_login_at = NOW()
          WHERE id = ?'
     );
     $clearLock->execute([(int)$u['id']]);
