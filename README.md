@@ -990,7 +990,7 @@ Ejemplo actual:
 COMPOSE_PROFILES=mysql
 
 APP_DOMAIN=app.test
-TZ=Europe/London
+APP_TIMEZONE=Europe/London
 
 DB_DATABASE=app_db
 DB_EMAIL=admin@admin.com

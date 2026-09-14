@@ -4,7 +4,7 @@ set -eu
 
 echo "==> Running database migrations..."
 
-find /docker-entrypoint-initdb.d/migrations \
+find /docker-entrypoint-initdb.d/mysql/migrations \
     -maxdepth 1 \
     -type f \
     -name '*.sql' \
@@ -22,7 +22,7 @@ find /docker-entrypoint-initdb.d/migrations \
 
 echo "==> Running database seeds..."
 
-find /docker-entrypoint-initdb.d/seeds \
+find /docker-entrypoint-initdb.d/mysql/seeds \
     -maxdepth 1 \
     -type f \
     -name '*.sql' \
