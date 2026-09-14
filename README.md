@@ -13,6 +13,11 @@ Este proyecto utiliza Docker Compose para levantar un entorno local con:
 
 > **Nota para mi yo del futuro:** si algo deja de funcionar después de tocar volúmenes, Nginx o HTTPS, revisar primero este documento antes de desmontar medio Docker.
 
+## Como crear los secretos
+
+echo "ADMIN_GATE_SECRET=$(openssl rand -hex 32)"
+echo "RATE_LIMIT_SECRET=$(openssl rand -hex 32)"
+
 ---
 
 # 1. Estructura general
@@ -539,30 +544,30 @@ Estos comandos están pensados para situaciones en las que se necesita empezar d
 
 ## 6.10. Resumen rápido
 
-| Necesidad | Comando |
-|---|---|
-| Primera instalación | `make setup` |
-| Ayuda | `make help` |
-| Levantar | `make up-detached` |
-| Levantar + build | `make up-build` |
-| Parar | `make stop` |
-| Eliminar contenedores | `make down` |
-| Reiniciar | `make restart` |
-| Estado | `make ps` |
-| Logs | `make logs` |
-| Logs Nginx | `make logs-nginx` |
-| Logs PHP | `make logs-php` |
-| Shell PHP | `make php` |
-| Shell Nginx | `make nginx` |
-| Build | `make build` |
-| Build sin caché | `make build-nc` |
-| Composer install | `make composer-install` |
-| Versión PHP | `make php-version` |
-| Generar certificados | `make certs` |
-| Comprobar certificados | `make certs-check` |
-| Regenerar certificados | `make certs-force` |
-| Reset completo | `make reset` |
-| Limpieza total | `make destroy` |
+| Necesidad              | Comando                 |
+| ---------------------- | ----------------------- |
+| Primera instalación    | `make setup`            |
+| Ayuda                  | `make help`             |
+| Levantar               | `make up-detached`      |
+| Levantar + build       | `make up-build`         |
+| Parar                  | `make stop`             |
+| Eliminar contenedores  | `make down`             |
+| Reiniciar              | `make restart`          |
+| Estado                 | `make ps`               |
+| Logs                   | `make logs`             |
+| Logs Nginx             | `make logs-nginx`       |
+| Logs PHP               | `make logs-php`         |
+| Shell PHP              | `make php`              |
+| Shell Nginx            | `make nginx`            |
+| Build                  | `make build`            |
+| Build sin caché        | `make build-nc`         |
+| Composer install       | `make composer-install` |
+| Versión PHP            | `make php-version`      |
+| Generar certificados   | `make certs`            |
+| Comprobar certificados | `make certs-check`      |
+| Regenerar certificados | `make certs-force`      |
+| Reset completo         | `make reset`            |
+| Limpieza total         | `make destroy`          |
 
 ---
 
