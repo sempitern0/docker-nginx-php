@@ -40,10 +40,14 @@ return [
         'pass'      => env_value('DB_PASSWORD', ''),
         'charset'   => $driver === 'pgsql' ? 'utf8' : 'utf8mb4',
         'collation' => 'utf8mb4_unicode_ci',
+        'connect_timeout' => (int) env_value('DB_CONNECT_TIMEOUT', '5'),
         'options' => [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::ATTR_STRINGIFY_FETCHES => false,
+            PDO::ATTR_TIMEOUT => (int)env_value('DB_CONNECT_TIMEOUT', '5'),
+            PDO::ATTR_PERSISTENT => false,
         ],
     ],
 

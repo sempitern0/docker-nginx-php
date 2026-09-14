@@ -32,19 +32,16 @@ function db(): PDO
             );
         }
 
+        $timeout = max(1, (int) config('db.connect_timeout', 5));
         $options = config('db.options', [
-            PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-            PDO::ATTR_EMULATE_PREPARES   => false,
+            PDO::ATTR_EMULATE_PREPARES => false,
+            PDO::ATTR_STRINGIFY_FETCHES => false,
+            PDO::ATTR_TIMEOUT => $timeout,
+            PDO::ATTR_PERSISTENT => false,
         ]);
 
-        if (!is_array($options)) {
-            $options = [
-                PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
-                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                PDO::ATTR_EMULATE_PREPARES   => false,
-            ];
-        }
 
         $pdo = new PDO(
             $dsn,
