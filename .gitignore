@@ -124,6 +124,9 @@ db-data/**
 database-data/
 database-data/**
 
+!database/mysql/
+!database/mysql/**
+
 # Database dumps generated locally
 *.sql.gz
 *.dump

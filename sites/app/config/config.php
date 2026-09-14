@@ -54,6 +54,7 @@ return [
         'max_login_attempts' => (int)env_value('MAX_LOGIN_ATTEMPTS', '5'),
         'lockout_minutes' => (int)env_value('LOCKOUT_MINUTES', '15'),
 
+        'admin_gate_secret' => env_value('ADMIN_GATE_SECRET', ''),
         'rate_limit_secret' => env_value('RATE_LIMIT_SECRET', ''),
         'login_ip_max_attempts' => (int)env_value('LOGIN_IP_MAX_ATTEMPTS', '20'),
         'login_ip_window_seconds' => (int)env_value('LOGIN_IP_WINDOW_SECONDS', '300'),
@@ -63,7 +64,6 @@ return [
         'session_samesite' => env_value('SESSION_SAMESITE', 'Lax'),
         'mfa_pending_timeout' => (int)env_value('MFA_PENDING_TIMEOUT', '300'),
         'authorization_cache_ttl' => (int)env_value('AUTHORIZATION_CACHE_TTL', '0'),
-        'admin_gate_secret' => env_value('ADMIN_GATE_SECRET', ''),
         'trusted_proxies' => array_values(array_filter(array_map(
             'trim',
             explode(',', (string)env_value('TRUSTED_PROXIES', '172.30.0.0/24'))

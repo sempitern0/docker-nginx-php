@@ -106,7 +106,7 @@ services:
       DB_ALLOW_EMPTY_PASSWORD: ${DB_ALLOW_EMPTY_PASSWORD:-no}
     volumes:
       - mariadb_data:/var/lib/mysql
-      - ./database:/docker-entrypoint-initdb.d:ro
+      - ./database/mysql:/docker-entrypoint-initdb.d:ro
 
     healthcheck:
       test: ["CMD-SHELL", "healthcheck.sh --connect --innodb_initialized"]
@@ -156,7 +156,7 @@ services:
       retries: 5
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./database:/docker-entrypoint-initdb.d:ro
+      - ./database/postgres:/docker-entrypoint-initdb.d:ro
     networks:
       - server-network
 
