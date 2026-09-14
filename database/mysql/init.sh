@@ -24,7 +24,7 @@ SQL
 
 echo "==> Running database migrations..."
 
-find /docker-entrypoint-initdb.d/mysql/migrations \
+find /docker-entrypoint-initdb.d/migrations \
     -maxdepth 1 \
     -type f \
     -name '*.sql' \
@@ -59,7 +59,7 @@ done
 
 echo "==> Running database seeds..."
 
-find /docker-entrypoint-initdb.d/mysql/seeds \
+find /docker-entrypoint-initdb.d/seeds \
     -maxdepth 1 \
     -type f \
     -name '*.sql' \
