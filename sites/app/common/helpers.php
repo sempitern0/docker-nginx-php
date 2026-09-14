@@ -8,10 +8,15 @@ function config(?string $key = null, mixed $default = null): mixed
 
     if ($config === null) {
         $path = dirname(__DIR__) . '/config/config.php';
-        $config = file_exists($path) ? require $path : [];
+
+        if (!is_file($path)) {
+            throw new RuntimeException('Configuration file not found.');
+        }
+
+        $config = require $path;
 
         if (!is_array($config)) {
-            $config = [];
+            throw new RuntimeException('Configuration file must return an array.');
         }
     }
 

@@ -28,13 +28,19 @@ function start_secure_session(): void
         $isSecure = (bool)$configuredSecure;
     }
 
+    $sameSite = (string)config('security.session_samesite', 'Lax');
+
+    if (!in_array($sameSite, ['Lax', 'Strict', 'None'], true)) {
+        $sameSite = 'Lax';
+    }
+
     session_set_cookie_params([
         'lifetime' => 0,
         'path'     => '/',
         'domain'   => '',
         'secure'   => $isSecure,
         'httponly' => true,
-        'samesite' => (string)config('security.session_samesite', 'Lax'),
+        'samesite' => $sameSite
     ]);
 
     session_start();

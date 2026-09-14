@@ -98,6 +98,12 @@ function system_setting_exists(string $key): bool
 
     $stmt->execute([$key]);
 
+    if ($stmt->rowCount() !== 1) {
+        throw new RuntimeException(
+            'Setting does not exist or is not editable.'
+        );
+    }
+
     return $stmt->fetchColumn() !== false;
 }
 
@@ -120,6 +126,10 @@ function update_system_setting(
         $userId,
         $key,
     ]);
+
+    if ($stmt->rowCount() !== 1) {
+        throw new RuntimeException("Error actualizando las configuraciones del sistema");
+    }
 }
 
 function get_all_system_settings(): array

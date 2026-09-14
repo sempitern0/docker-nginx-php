@@ -2,6 +2,27 @@
 
 declare(strict_types=1);
 
+function establish_authenticated_session(
+    int $userId,
+    string $username,
+    array $roles,
+    array $permissions
+): void {
+    regenerate_authenticated_session();
+
+    unset(
+        $_SESSION['mfa_pending_user_id'],
+        $_SESSION['mfa_pending_at']
+    );
+
+    $_SESSION['user_id'] = $userId;
+    $_SESSION['username'] = $username;
+    $_SESSION['roles'] = $roles;
+    $_SESSION['permissions'] = $permissions;
+    $_SESSION['authorization_loaded_at'] = time();
+    $_SESSION['last_activity'] = time();
+}
+
 function complete_mfa_login(int $userId): bool
 {
     if ($userId <= 0) {
@@ -29,23 +50,16 @@ function complete_mfa_login(int $userId): bool
     $roles = get_user_roles($userId);
     $permissions = get_user_permissions($userId);
 
-    regenerate_authenticated_session();
-
-    unset($_SESSION['mfa_pending_user_id']);
-
-    $_SESSION['user_id'] = $userId;
-    $_SESSION['username'] = $u['username'];
-    $_SESSION['roles'] = $roles;
-    $_SESSION['permissions'] = $permissions;
-    $_SESSION['authorization_loaded_at'] = time();
-    $_SESSION['last_activity'] = time();
+    establish_authenticated_session($userId, $u['username'], $roles, $permissions);
 
     rate_limit_clear('login:user', (string)$userId);
+
     $clearLock = db()->prepare(
         'UPDATE users
          SET failed_attempts = 0, locked_until = NULL, last_login_at = NOW()
          WHERE id = ?'
     );
+
     $clearLock->execute([$userId]);
 
     audit($userId, $u['username'], 'auth.login.success', 'Inicio de sesión exitoso tras MFA', true);
@@ -61,7 +75,19 @@ function login_user(string $username, string $password): string|bool
     }
 
     $stmt = db()->prepare(
-        'SELECT *
+        'SELECT 
+            id,
+            username,
+            email,
+            password_hash,
+            is_active,
+            email_verified_at,
+            failed_attempts,
+            locked_until,
+            mfa_enabled,
+            mfa_secret,
+            last_login_at,
+            created_at
          FROM users
          WHERE username = ? AND deleted_at IS NULL
          LIMIT 1'
@@ -93,6 +119,7 @@ function login_user(string $username, string $password): string|bool
 
         return 'Credenciales incorrectas.';
     }
+
 
     if (!(int)$u['is_active']) {
         audit((int)$u['id'], $u['username'], 'auth.login.failed', 'Cuenta desactivada', false);
@@ -133,12 +160,18 @@ function login_user(string $username, string $password): string|bool
             $locked = $attempts >= $maxAttempts;
 
             if ($locked) {
+                $lockedUntil = (new DateTimeImmutable())
+                    ->modify("+{$lockoutMins} minutes")
+                    ->format('Y-m-d H:i:s');
+
                 $sql = sprintf(
                     'UPDATE users
                      SET failed_attempts = ?,
-                         locked_until = DATE_ADD(NOW(), INTERVAL %d MINUTE)
+                         locked_until = ?
                      WHERE id = ?',
-                    $lockoutMins
+                    $lockoutMins,
+                    $lockedUntil
+
                 );
 
                 $update = $pdo->prepare($sql);
@@ -201,6 +234,7 @@ function login_user(string $username, string $password): string|bool
                 'Configuración de MFA requerida',
                 true
             );
+
             return 'mfa_setup_required';
         }
 
@@ -211,6 +245,9 @@ function login_user(string $username, string $password): string|bool
             'Paso de verificación MFA requerido',
             true
         );
+
+
+
         return 'mfa_verify_required';
     }
 
@@ -218,16 +255,7 @@ function login_user(string $username, string $password): string|bool
     $roles = get_user_roles((int)$u['id']);
     $permissions = get_user_permissions((int)$u['id']);
 
-    regenerate_authenticated_session();
-
-    unset($_SESSION['mfa_pending_user_id'], $_SESSION['mfa_pending_at']);
-
-    $_SESSION['user_id'] = (int)$u['id'];
-    $_SESSION['username'] = $u['username'];
-    $_SESSION['roles'] = $roles;
-    $_SESSION['permissions'] = $permissions;
-    $_SESSION['authorization_loaded_at'] = time();
-    $_SESSION['last_activity'] = time();
+    establish_authenticated_session((int)$u['id'], $u['username'], $roles, $permissions);
 
     $clearLock = db()->prepare(
         'UPDATE users

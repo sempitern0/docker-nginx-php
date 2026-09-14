@@ -27,7 +27,11 @@ function admin_daily_code(?DateTimeImmutable $now = null): string
     $now ??= new DateTimeImmutable('now', $timezone);
     $date = $now->setTimezone($timezone)->format('Y-m-d');
 
-    return substr(hash_hmac('sha256', "mercadoblanco-admin|$date", $secret), 0, 32);
+    return substr(hash_hmac(
+        'sha256',
+        "admin-gate|$date",
+        $secret
+    ), 0, 32);
 }
 
 
@@ -58,15 +62,16 @@ function require_admin_gate(): void
     }
 
     $today = admin_gate_date();
-    $providedCode = (string)($_GET['code'] ?? '');
+    $providedCode = (string)($_POST['code'] ?? '');
 
     if ($providedCode !== '' && verify_admin_gate_code($providedCode)) {
         return;
     }
 
     if (
-        ($_SESSION['admin_gate_date'] ?? null) === $today
-        && (int)($_SESSION['admin_gate_verified_at'] ?? 0) > 0
+        $_SESSION['admin_gate_date'] === $today
+        && time() - (int)$_SESSION['admin_gate_verified_at']
+        <= config('security.admin_gate_timeout', 3600)
     ) {
         return;
     }

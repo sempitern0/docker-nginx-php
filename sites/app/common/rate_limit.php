@@ -250,11 +250,14 @@ function rate_limit_clear(string $scope, string $identifier): void
 function rate_limit_cleanup(int $maxAgeSeconds = 86400): void
 {
     $maxAgeSeconds = max(3600, $maxAgeSeconds);
+    $cutoff = (new DateTimeImmutable())
+        ->modify("-{$maxAgeSeconds} seconds")
+        ->format('Y-m-d H:i:s');
 
     $sql = sprintf(
         'DELETE FROM rate_limits
-         WHERE last_attempt_at < DATE_SUB(NOW(), INTERVAL %d SECOND)',
-        $maxAgeSeconds
+         WHERE last_attempt_at < ?',
+        $cutoff,
     );
 
     db()->exec($sql);

@@ -112,9 +112,11 @@ function is_trusted_proxy(?string $ip): bool
         }
 
         if (!str_contains($trustedNetwork, '/')) {
-            if (hash_equals($trustedNetwork, $ip)) {
+
+            if ($trustedNetwork === $ip) {
                 return true;
             }
+
             continue;
         }
 
@@ -126,6 +128,10 @@ function is_trusted_proxy(?string $ip): bool
     return false;
 }
 
+/*
+ * Only honor forwarded client IP headers when REMOTE_ADDR
+ * belongs to a configured trusted proxy.
+ */
 function client_ip(): ?string
 {
     $remote = $_SERVER['REMOTE_ADDR'] ?? null;

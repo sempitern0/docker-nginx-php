@@ -45,7 +45,11 @@ services:
       - ./sites:/usr/share/nginx/html:ro
       - ./storage:/var/www/storage
     environment:
+      APP_NAME: ${APP_NAME:-MYSITE}
       APP_TIMEZONE: ${APP_TIMEZONE:-Europe/London}
+      APP_DOMAIN: ${APP_DOMAIN}
+      APP_DEBUG: ${APP_DEBUG:-false}
+      APP_LOCALE: ${APP_LOCALE:-en}
       POSTGRES_PORT: ${POSTGRES_PORT:-5432}
       MYSQL_PORT: ${MYSQL_PORT:-3306}
       DB_DRIVER: ${DB_DRIVER:-mysql}
@@ -56,10 +60,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       DB_ALLOW_EMPTY_PASSWORD: ${DB_ALLOW_EMPTY_PASSWORD:-no}
       DB_CONNECT_TIMEOUT: ${DB_CONNECT_TIMEOUT:-5}
-      APP_DOMAIN: ${APP_DOMAIN}
-      APP_DEBUG: ${APP_DEBUG:-false}
-      APP_LOCALE: ${APP_LOCALE:-en}
       ADMIN_GATE_SECRET: ${ADMIN_GATE_SECRET}
+      ADMIN_GATE_TIMEOUT: ${ADMIN_GATE_TIMEOUT:-3600}
       SESSION_NAME: ${SESSION_NAME:-MERCADOBLANCO_SESSID}
       SESSION_TIMEOUT: ${SESSION_TIMEOUT:-1800}
       SESSION_SECURE_COOKIE: ${SESSION_SECURE_COOKIE:-true}

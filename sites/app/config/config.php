@@ -19,11 +19,15 @@ function env_value(string $name, ?string $default = null): ?string
     return $value === false ? $default : $value;
 }
 
-$driver = env_value('DB_DRIVER', 'mysql');
+$driver = strtolower(trim((string)env_value('DB_DRIVER', 'mysql')));
+
+if (!in_array($driver, ['mysql', 'pgsql'], true)) {
+    throw new RuntimeException('Unsupported database driver.');
+}
 
 return [
     'app' => [
-        'name' => env_value('APP_NAME', 'Mercado blanco'),
+        'name' => env_value('APP_NAME', 'MYSITE'),
         'env' => env_value('APP_ENV', 'development'),
         'debug' => filter_var(env_value('APP_DEBUG', 'false'), FILTER_VALIDATE_BOOLEAN),
         'timezone' => env_value('APP_TIMEZONE', 'Europe/Madrid'),
@@ -52,13 +56,14 @@ return [
     ],
 
     'security' => [
-        'session_name' => env_value('SESSION_NAME', 'MERCADOBLANCO_SESSID'),
+        'session_name' => env_value('SESSION_NAME', 'APP_SESSID'),
         'session_timeout' => (int)env_value('SESSION_TIMEOUT', '1800'),
         'secure_cookies' => filter_var(env_value('SESSION_SECURE_COOKIE', 'true'), FILTER_VALIDATE_BOOLEAN),
         'max_login_attempts' => (int)env_value('MAX_LOGIN_ATTEMPTS', '5'),
         'lockout_minutes' => (int)env_value('LOCKOUT_MINUTES', '15'),
 
         'admin_gate_secret' => env_value('ADMIN_GATE_SECRET', ''),
+        'admin_gate_timeout' => (int)env_value('ADMIN_GATE_TIMEOUT', '3600'),
         'rate_limit_secret' => env_value('RATE_LIMIT_SECRET', ''),
         'login_ip_max_attempts' => (int)env_value('LOGIN_IP_MAX_ATTEMPTS', '20'),
         'login_ip_window_seconds' => (int)env_value('LOGIN_IP_WINDOW_SECONDS', '300'),

@@ -42,13 +42,20 @@ function db(): PDO
             PDO::ATTR_PERSISTENT => false,
         ]);
 
-
-        $pdo = new PDO(
-            $dsn,
-            (string)config('db.user', 'root'),
-            (string)config('db.pass', ''),
-            $options
-        );
+        try {
+            $pdo = new PDO(
+                $dsn,
+                (string)config('db.user', 'root'),
+                (string)config('db.pass', ''),
+                $options
+            );
+        } catch (PDOException $e) {
+            throw new RuntimeException(
+                'Unable to connect to the database.',
+                0,
+                $e
+            );
+        }
     }
 
     return $pdo;

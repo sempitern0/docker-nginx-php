@@ -43,12 +43,6 @@ function get_user_permissions(int $userId): array
  */
 function get_user_permissions_detailed(int $userId): array
 {
-    static $cache = [];
-
-    if (isset($cache[$userId])) {
-        return $cache[$userId];
-    }
-
     $stmt = db()->prepare('
         SELECT DISTINCT p.id, p.slug, p.description
         FROM permissions p
@@ -59,9 +53,8 @@ function get_user_permissions_detailed(int $userId): array
     ');
 
     $stmt->execute([$userId]);
-    $cache[$userId] = $stmt->fetchAll() ?: [];
 
-    return $cache[$userId];
+    return $stmt->fetchAll() ?: [];
 }
 
 /**
@@ -69,8 +62,13 @@ function get_user_permissions_detailed(int $userId): array
  */
 function get_user_profile(int $userId): ?array
 {
+    if ($userId <= 0) {
+        return null;
+    }
+
     $stmt = db()->prepare('SELECT * FROM user_profiles WHERE user_id = ? LIMIT 1');
     $stmt->execute([$userId]);
+
     return $stmt->fetch() ?: null;
 }
 
@@ -155,7 +153,10 @@ function current_user_permissions(): array
 function has_role(string|array $roles): bool
 {
     $authorization = current_authorization();
-    $checkRoles = (array)$roles;
+    $checkRoles = array_filter(
+        array_map('strval', (array)$roles),
+        static fn(string $role): bool => $role !== ''
+    );
 
     return !empty(array_intersect($checkRoles, $authorization['roles']));
 }
