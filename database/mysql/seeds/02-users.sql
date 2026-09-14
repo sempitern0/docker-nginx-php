@@ -1,4 +1,4 @@
-INSERT INTO users (
+INSERT IGNORE INTO users (
     username,
     email,
     password_hash,
@@ -29,12 +29,7 @@ INSERT INTO users (
     1,
     CURRENT_TIMESTAMP,
     CURRENT_TIMESTAMP
-)
-ON DUPLICATE KEY UPDATE
-    email = VALUES(email),
-    is_active = VALUES(is_active),
-    email_verified_at = VALUES(email_verified_at),
-    password_changed_at = VALUES(password_changed_at);
+);
 
 
 INSERT IGNORE INTO user_roles (
@@ -60,34 +55,12 @@ WHERE
     (
         u.username = 'guest'
         AND r.slug = 'guest'
-    );
-
-INSERT INTO user_profiles (
-    user_id,
-    first_name,
-    last_name,
-    country_code
-)
-SELECT
-    id,
-    CASE username
-        WHEN 'admin' THEN 'Admin'
-        WHEN 'user' THEN 'Normal'
-        WHEN 'guest' THEN 'Guest'
-    END,
-    'Demo',
-    'ES'
-FROM users
-WHERE username IN ('admin', 'user', 'guest')
-ON DUPLICATE KEY UPDATE
-    first_name = VALUES(first_name),
-    last_name = VALUES(last_name),
-    country_code = VALUES(country_code);
+    );;
 
 -- Synthetic demo data only. Emails use example.test and addresses are intentionally fictitious.
 -- Demo password for every generated account: User123!
 
-INSERT INTO users (username, email, password_hash, is_active, email_verified_at, password_changed_at) VALUES
+INSERT IGNORE INTO users (username, email, password_hash, is_active, email_verified_at, password_changed_at) VALUES
     ('user001', 'user001@example.test', '$2y$12$sFA5lQHFbuCNfY3Ki/7CJO9S11hbSatbp5WxQkWiouYmNV9tJcdDy', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('user002', 'user002@example.test', '$2y$12$sFA5lQHFbuCNfY3Ki/7CJO9S11hbSatbp5WxQkWiouYmNV9tJcdDy', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('user003', 'user003@example.test', '$2y$12$sFA5lQHFbuCNfY3Ki/7CJO9S11hbSatbp5WxQkWiouYmNV9tJcdDy', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
@@ -327,266 +300,18 @@ INSERT INTO users (username, email, password_hash, is_active, email_verified_at,
     ('guest237', 'guest237@example.test', '$2y$12$sFA5lQHFbuCNfY3Ki/7CJO9S11hbSatbp5WxQkWiouYmNV9tJcdDy', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('guest238', 'guest238@example.test', '$2y$12$sFA5lQHFbuCNfY3Ki/7CJO9S11hbSatbp5WxQkWiouYmNV9tJcdDy', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
     ('guest239', 'guest239@example.test', '$2y$12$sFA5lQHFbuCNfY3Ki/7CJO9S11hbSatbp5WxQkWiouYmNV9tJcdDy', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
-    ('guest240', 'guest240@example.test', '$2y$12$sFA5lQHFbuCNfY3Ki/7CJO9S11hbSatbp5WxQkWiouYmNV9tJcdDy', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+    ('guest240', 'guest240@example.test', '$2y$12$sFA5lQHFbuCNfY3Ki/7CJO9S11hbSatbp5WxQkWiouYmNV9tJcdDy', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);;
 
-INSERT INTO user_profiles (user_id, first_name, last_name, phone, address_line, city, postal_code, country_code)
-SELECT u.id, d.first_name, d.last_name, d.phone, d.address_line, d.city, d.postal_code, d.country_code
-FROM users u
-JOIN (VALUES
-    ('user001', 'Adrián', 'Alonso Díaz', NULL, 'Calle del Prado Nuevo 10', 'Madrid', '28001', 'ES'),
-    ('user002', 'Alba', 'Blanco Gallardo', NULL, 'Avenida de la Dehesa Alta 11', 'Madrid', '28023', 'ES'),
-    ('user003', 'Alejandro', 'Campos Hernández', NULL, 'Carrer de la Marina Nova 12', 'Barcelona', '08012', 'ES'),
-    ('user004', 'Alicia', 'Crespo Marín', NULL, 'Carrer del Montseny Blau 13', 'Barcelona', '08027', 'ES'),
-    ('user005', 'Álvaro', 'Domínguez Montes', NULL, 'Carrer de l’Albufera Nova 14', 'Valencia', '46017', 'ES'),
-    ('user006', 'Ana', 'Fernández Ortega', NULL, 'Carrer del Túria Vell 15', 'Valencia', '46022', 'ES'),
-    ('user007', 'Andrés', 'Gallardo Ramírez', NULL, 'Calle del Guadalquivir Alto 16', 'Sevilla', '41013', 'ES'),
-    ('user008', 'Beatriz', 'Gómez Sáez', NULL, 'Calle de la Giralda Clara 17', 'Sevilla', '41020', 'ES'),
-    ('user009', 'Bruno', 'Gutiérrez Vargas', NULL, 'Calle del Ebro Interior 18', 'Zaragoza', '50018', 'ES'),
-    ('user010', 'Carla', 'Jiménez Cabrera', NULL, 'Calle del Mediterráneo Sur 19', 'Málaga', '29016', 'ES'),
-    ('user011', 'Carlos', 'Lorenzo Díaz', NULL, 'Avenida de la Huerta Nueva 20', 'Murcia', '30009', 'ES'),
-    ('user012', 'Clara', 'Márquez Gallardo', NULL, 'Carrer de la Serra Blanca 21', 'Palma', '07013', 'ES'),
-    ('user013', 'Daniel', 'Medina Hernández', NULL, 'Calle del Atlántico Claro 22', 'Las Palmas de Gran Canaria', '35016', 'ES'),
-    ('user014', 'Daniela', 'Montes Marín', NULL, 'Calle de la Costa Serena 23', 'Alicante', '03008', 'ES'),
-    ('user015', 'David', 'Moya Montes', NULL, 'Calle del Nervión Verde 24', 'Bilbao', '48014', 'ES'),
-    ('user016', 'Diego', 'Núñez Ortega', NULL, 'Rúa do Atlántico Norte 25', 'A Coruña', '15008', 'ES'),
-    ('user017', 'Elena', 'Pascual Ramírez', NULL, 'Calle del Pisuerga Nuevo 26', 'Valladolid', '47014', 'ES'),
-    ('user018', 'Elías', 'Pérez Sáez', NULL, 'Rúa das Illas Atlánticas 27', 'Vigo', '36210', 'ES'),
-    ('user019', 'Eva', 'Ramos Vargas', NULL, 'Calle del Cantábrico Norte 28', 'Gijón', '33212', 'ES'),
-    ('user020', 'Fernando', 'Romero Cabrera', NULL, 'Calle de Sierra Clara 29', 'Granada', '18015', 'ES'),
-    ('user021', 'Gabriel', 'Sáez Díaz', NULL, 'Avenida del Teide Alto 30', 'Tenerife', '38009', 'ES'),
-    ('user022', 'Gema', 'Sanz Gallardo', NULL, 'Calle de la Sierra Morena 31', 'Córdoba', '14011', 'ES'),
-    ('user023', 'Guillermo', 'Torres Hernández', NULL, 'Calle de Navarra Central 32', 'Pamplona', '31008', 'ES'),
-    ('user024', 'Héctor', 'Vega Marín', NULL, 'Calle de la Bahía Alta 33', 'Santander', '39012', 'ES'),
-    ('user025', 'Irene', 'Benítez Montes', NULL, 'Calle del Tormes Claro 34', 'Salamanca', '37005', 'ES'),
-    ('user026', 'Iván', 'Calvo Ortega', NULL, 'Calle de los Cigarrales Nuevos 35', 'Toledo', '45005', 'ES'),
-    ('user027', 'Javier', 'Cortés Ramírez', NULL, 'Calle del Arlanzón Norte 36', 'Burgos', '09006', 'ES'),
-    ('user028', 'Jimena', 'Díaz Sáez', NULL, 'Calle del Ebro Riojano 37', 'Logroño', '26007', 'ES'),
-    ('user029', 'Jorge', 'Esteban Vargas', NULL, 'Calle del Naranco Nuevo 38', 'Oviedo', '33011', 'ES'),
-    ('user030', 'Julia', 'Fuentes Cabrera', NULL, 'Avenida de la Bahía Serena 39', 'Cádiz', '11009', 'ES'),
-    ('user031', 'Laura', 'Giménez Díaz', NULL, 'Calle del Prado Nuevo 40', 'Madrid', '28001', 'ES'),
-    ('user032', 'Leire', 'Guerrero Gallardo', NULL, 'Avenida de la Dehesa Alta 41', 'Madrid', '28023', 'ES'),
-    ('user033', 'Leo', 'Iglesias Hernández', NULL, 'Carrer de la Marina Nova 42', 'Barcelona', '08012', 'ES'),
-    ('user034', 'Lucía', 'León Marín', NULL, 'Carrer del Montseny Blau 43', 'Barcelona', '08027', 'ES'),
-    ('user035', 'Manuel', 'Marín Montes', NULL, 'Carrer de l’Albufera Nova 44', 'Valencia', '46017', 'ES'),
-    ('user036', 'Marc', 'Martínez Ortega', NULL, 'Carrer del Túria Vell 45', 'Valencia', '46022', 'ES'),
-    ('user037', 'Marcos', 'Molina Ramírez', NULL, 'Calle del Guadalquivir Alto 46', 'Sevilla', '41013', 'ES'),
-    ('user038', 'María', 'Moreno Sáez', NULL, 'Calle de la Giralda Clara 47', 'Sevilla', '41020', 'ES'),
-    ('user039', 'Martín', 'Nieto Vargas', NULL, 'Calle del Ebro Interior 48', 'Zaragoza', '50018', 'ES'),
-    ('user040', 'Mateo', 'Ortiz Cabrera', NULL, 'Calle del Mediterráneo Sur 49', 'Málaga', '29016', 'ES'),
-    ('user041', 'Marta', 'Peña Díaz', NULL, 'Avenida de la Huerta Nueva 50', 'Murcia', '30009', 'ES'),
-    ('user042', 'Miguel', 'Ramírez Gallardo', NULL, 'Carrer de la Serra Blanca 51', 'Palma', '07013', 'ES'),
-    ('user043', 'Nadia', 'Rodríguez Hernández', NULL, 'Calle del Atlántico Claro 52', 'Las Palmas de Gran Canaria', '35016', 'ES'),
-    ('user044', 'Nerea', 'Ruiz Marín', NULL, 'Calle de la Costa Serena 53', 'Alicante', '03008', 'ES'),
-    ('user045', 'Nicolás', 'Santiago Montes', NULL, 'Calle del Nervión Verde 54', 'Bilbao', '48014', 'ES'),
-    ('user046', 'Noelia', 'Suárez Ortega', NULL, 'Rúa do Atlántico Norte 55', 'A Coruña', '15008', 'ES'),
-    ('user047', 'Óscar', 'Vázquez Ramírez', NULL, 'Calle del Pisuerga Nuevo 56', 'Valladolid', '47014', 'ES'),
-    ('user048', 'Pablo', 'Álvarez Sáez', NULL, 'Rúa das Illas Atlánticas 57', 'Vigo', '36210', 'ES'),
-    ('user049', 'Paula', 'Cabrera Vargas', NULL, 'Calle del Cantábrico Norte 58', 'Gijón', '33212', 'ES'),
-    ('user050', 'Raúl', 'Castro Cabrera', NULL, 'Calle de Sierra Clara 59', 'Granada', '18015', 'ES'),
-    ('user051', 'Rebeca', 'Delgado Díaz', NULL, 'Avenida del Teide Alto 60', 'Tenerife', '38009', 'ES'),
-    ('user052', 'Rocío', 'Durán Gallardo', NULL, 'Calle de la Sierra Morena 61', 'Córdoba', '14011', 'ES'),
-    ('user053', 'Samuel', 'Flores Hernández', NULL, 'Calle de Navarra Central 62', 'Pamplona', '31008', 'ES'),
-    ('user054', 'Sara', 'García Marín', NULL, 'Calle de la Bahía Alta 63', 'Santander', '39012', 'ES'),
-    ('user055', 'Sergio', 'González Montes', NULL, 'Calle del Tormes Claro 64', 'Salamanca', '37005', 'ES'),
-    ('user056', 'Silvia', 'Hernández Ortega', NULL, 'Calle de los Cigarrales Nuevos 65', 'Toledo', '45005', 'ES'),
-    ('user057', 'Sofía', 'Lara Ramírez', NULL, 'Calle del Arlanzón Norte 66', 'Burgos', '09006', 'ES'),
-    ('user058', 'Tomás', 'Lozano Sáez', NULL, 'Calle del Ebro Riojano 67', 'Logroño', '26007', 'ES'),
-    ('user059', 'Valeria', 'Martín Vargas', NULL, 'Calle del Naranco Nuevo 68', 'Oviedo', '33011', 'ES'),
-    ('user060', 'Víctor', 'Méndez Cabrera', NULL, 'Avenida de la Bahía Serena 69', 'Cádiz', '11009', 'ES'),
-    ('user061', 'Adrián', 'Morales Díaz', NULL, 'Calle del Prado Nuevo 70', 'Madrid', '28001', 'ES'),
-    ('user062', 'Alba', 'Navarro Gallardo', NULL, 'Avenida de la Dehesa Alta 71', 'Madrid', '28023', 'ES'),
-    ('user063', 'Alejandro', 'Ortega Hernández', NULL, 'Carrer de la Marina Nova 72', 'Barcelona', '08012', 'ES'),
-    ('user064', 'Alicia', 'Pastor Marín', NULL, 'Carrer del Montseny Blau 73', 'Barcelona', '08027', 'ES'),
-    ('user065', 'Álvaro', 'Prieto Montes', NULL, 'Carrer de l’Albufera Nova 74', 'Valencia', '46017', 'ES'),
-    ('user066', 'Ana', 'Reyes Ortega', NULL, 'Carrer del Túria Vell 75', 'Valencia', '46022', 'ES'),
-    ('user067', 'Andrés', 'Rubio Ramírez', NULL, 'Calle del Guadalquivir Alto 76', 'Sevilla', '41013', 'ES'),
-    ('user068', 'Beatriz', 'Sánchez Sáez', NULL, 'Calle de la Giralda Clara 77', 'Sevilla', '41020', 'ES'),
-    ('user069', 'Bruno', 'Serrano Vargas', NULL, 'Calle del Ebro Interior 78', 'Zaragoza', '50018', 'ES'),
-    ('user070', 'Carla', 'Vargas Cabrera', NULL, 'Calle del Mediterráneo Sur 79', 'Málaga', '29016', 'ES'),
-    ('user071', 'Carlos', 'Alonso Díaz', NULL, 'Avenida de la Huerta Nueva 80', 'Murcia', '30009', 'ES'),
-    ('user072', 'Clara', 'Blanco Gallardo', NULL, 'Carrer de la Serra Blanca 81', 'Palma', '07013', 'ES'),
-    ('user073', 'Daniel', 'Campos Hernández', NULL, 'Calle del Atlántico Claro 82', 'Las Palmas de Gran Canaria', '35016', 'ES'),
-    ('user074', 'Daniela', 'Crespo Marín', NULL, 'Calle de la Costa Serena 83', 'Alicante', '03008', 'ES'),
-    ('user075', 'David', 'Domínguez Montes', NULL, 'Calle del Nervión Verde 84', 'Bilbao', '48014', 'ES'),
-    ('user076', 'Diego', 'Fernández Ortega', NULL, 'Rúa do Atlántico Norte 85', 'A Coruña', '15008', 'ES'),
-    ('user077', 'Elena', 'Gallardo Ramírez', NULL, 'Calle del Pisuerga Nuevo 86', 'Valladolid', '47014', 'ES'),
-    ('user078', 'Elías', 'Gómez Sáez', NULL, 'Rúa das Illas Atlánticas 87', 'Vigo', '36210', 'ES'),
-    ('user079', 'Eva', 'Gutiérrez Vargas', NULL, 'Calle del Cantábrico Norte 88', 'Gijón', '33212', 'ES'),
-    ('user080', 'Fernando', 'Jiménez Cabrera', NULL, 'Calle de Sierra Clara 89', 'Granada', '18015', 'ES'),
-    ('user081', 'Gabriel', 'Lorenzo Díaz', NULL, 'Avenida del Teide Alto 90', 'Tenerife', '38009', 'ES'),
-    ('user082', 'Gema', 'Márquez Gallardo', NULL, 'Calle de la Sierra Morena 91', 'Córdoba', '14011', 'ES'),
-    ('user083', 'Guillermo', 'Medina Hernández', NULL, 'Calle de Navarra Central 92', 'Pamplona', '31008', 'ES'),
-    ('user084', 'Héctor', 'Montes Marín', NULL, 'Calle de la Bahía Alta 93', 'Santander', '39012', 'ES'),
-    ('user085', 'Irene', 'Moya Montes', NULL, 'Calle del Tormes Claro 94', 'Salamanca', '37005', 'ES'),
-    ('user086', 'Iván', 'Núñez Ortega', NULL, 'Calle de los Cigarrales Nuevos 95', 'Toledo', '45005', 'ES'),
-    ('user087', 'Javier', 'Pascual Ramírez', NULL, 'Calle del Arlanzón Norte 96', 'Burgos', '09006', 'ES'),
-    ('user088', 'Jimena', 'Pérez Sáez', NULL, 'Calle del Ebro Riojano 97', 'Logroño', '26007', 'ES'),
-    ('user089', 'Jorge', 'Ramos Vargas', NULL, 'Calle del Naranco Nuevo 98', 'Oviedo', '33011', 'ES'),
-    ('user090', 'Julia', 'Romero Cabrera', NULL, 'Avenida de la Bahía Serena 99', 'Cádiz', '11009', 'ES'),
-    ('user091', 'Laura', 'Sáez Díaz', NULL, 'Calle del Prado Nuevo 10', 'Madrid', '28001', 'ES'),
-    ('user092', 'Leire', 'Sanz Gallardo', NULL, 'Avenida de la Dehesa Alta 11', 'Madrid', '28023', 'ES'),
-    ('user093', 'Leo', 'Torres Hernández', NULL, 'Carrer de la Marina Nova 12', 'Barcelona', '08012', 'ES'),
-    ('user094', 'Lucía', 'Vega Marín', NULL, 'Carrer del Montseny Blau 13', 'Barcelona', '08027', 'ES'),
-    ('user095', 'Manuel', 'Benítez Montes', NULL, 'Carrer de l’Albufera Nova 14', 'Valencia', '46017', 'ES'),
-    ('user096', 'Marc', 'Calvo Ortega', NULL, 'Carrer del Túria Vell 15', 'Valencia', '46022', 'ES'),
-    ('user097', 'Marcos', 'Cortés Ramírez', NULL, 'Calle del Guadalquivir Alto 16', 'Sevilla', '41013', 'ES'),
-    ('user098', 'María', 'Díaz Sáez', NULL, 'Calle de la Giralda Clara 17', 'Sevilla', '41020', 'ES'),
-    ('user099', 'Martín', 'Esteban Vargas', NULL, 'Calle del Ebro Interior 18', 'Zaragoza', '50018', 'ES'),
-    ('user100', 'Mateo', 'Fuentes Cabrera', NULL, 'Calle del Mediterráneo Sur 19', 'Málaga', '29016', 'ES'),
-    ('user101', 'Marta', 'Giménez Díaz', NULL, 'Avenida de la Huerta Nueva 20', 'Murcia', '30009', 'ES'),
-    ('user102', 'Miguel', 'Guerrero Gallardo', NULL, 'Carrer de la Serra Blanca 21', 'Palma', '07013', 'ES'),
-    ('user103', 'Nadia', 'Iglesias Hernández', NULL, 'Calle del Atlántico Claro 22', 'Las Palmas de Gran Canaria', '35016', 'ES'),
-    ('user104', 'Nerea', 'León Marín', NULL, 'Calle de la Costa Serena 23', 'Alicante', '03008', 'ES'),
-    ('user105', 'Nicolás', 'Marín Montes', NULL, 'Calle del Nervión Verde 24', 'Bilbao', '48014', 'ES'),
-    ('user106', 'Noelia', 'Martínez Ortega', NULL, 'Rúa do Atlántico Norte 25', 'A Coruña', '15008', 'ES'),
-    ('user107', 'Óscar', 'Molina Ramírez', NULL, 'Calle del Pisuerga Nuevo 26', 'Valladolid', '47014', 'ES'),
-    ('user108', 'Pablo', 'Moreno Sáez', NULL, 'Rúa das Illas Atlánticas 27', 'Vigo', '36210', 'ES'),
-    ('user109', 'Paula', 'Nieto Vargas', NULL, 'Calle del Cantábrico Norte 28', 'Gijón', '33212', 'ES'),
-    ('user110', 'Raúl', 'Ortiz Cabrera', NULL, 'Calle de Sierra Clara 29', 'Granada', '18015', 'ES'),
-    ('user111', 'Rebeca', 'Peña Díaz', NULL, 'Avenida del Teide Alto 30', 'Tenerife', '38009', 'ES'),
-    ('user112', 'Rocío', 'Ramírez Gallardo', NULL, 'Calle de la Sierra Morena 31', 'Córdoba', '14011', 'ES'),
-    ('user113', 'Samuel', 'Rodríguez Hernández', NULL, 'Calle de Navarra Central 32', 'Pamplona', '31008', 'ES'),
-    ('user114', 'Sara', 'Ruiz Marín', NULL, 'Calle de la Bahía Alta 33', 'Santander', '39012', 'ES'),
-    ('user115', 'Sergio', 'Santiago Montes', NULL, 'Calle del Tormes Claro 34', 'Salamanca', '37005', 'ES'),
-    ('user116', 'Silvia', 'Suárez Ortega', NULL, 'Calle de los Cigarrales Nuevos 35', 'Toledo', '45005', 'ES'),
-    ('user117', 'Sofía', 'Vázquez Ramírez', NULL, 'Calle del Arlanzón Norte 36', 'Burgos', '09006', 'ES'),
-    ('user118', 'Tomás', 'Álvarez Sáez', NULL, 'Calle del Ebro Riojano 37', 'Logroño', '26007', 'ES'),
-    ('user119', 'Valeria', 'Cabrera Vargas', NULL, 'Calle del Naranco Nuevo 38', 'Oviedo', '33011', 'ES'),
-    ('user120', 'Víctor', 'Castro Cabrera', NULL, 'Avenida de la Bahía Serena 39', 'Cádiz', '11009', 'ES'),
-    ('guest121', 'Adrián', 'Delgado Díaz', NULL, 'Calle del Prado Nuevo 40', 'Madrid', '28001', 'ES'),
-    ('guest122', 'Alba', 'Durán Gallardo', NULL, 'Avenida de la Dehesa Alta 41', 'Madrid', '28023', 'ES'),
-    ('guest123', 'Alejandro', 'Flores Hernández', NULL, 'Carrer de la Marina Nova 42', 'Barcelona', '08012', 'ES'),
-    ('guest124', 'Alicia', 'García Marín', NULL, 'Carrer del Montseny Blau 43', 'Barcelona', '08027', 'ES'),
-    ('guest125', 'Álvaro', 'González Montes', NULL, 'Carrer de l’Albufera Nova 44', 'Valencia', '46017', 'ES'),
-    ('guest126', 'Ana', 'Hernández Ortega', NULL, 'Carrer del Túria Vell 45', 'Valencia', '46022', 'ES'),
-    ('guest127', 'Andrés', 'Lara Ramírez', NULL, 'Calle del Guadalquivir Alto 46', 'Sevilla', '41013', 'ES'),
-    ('guest128', 'Beatriz', 'Lozano Sáez', NULL, 'Calle de la Giralda Clara 47', 'Sevilla', '41020', 'ES'),
-    ('guest129', 'Bruno', 'Martín Vargas', NULL, 'Calle del Ebro Interior 48', 'Zaragoza', '50018', 'ES'),
-    ('guest130', 'Carla', 'Méndez Cabrera', NULL, 'Calle del Mediterráneo Sur 49', 'Málaga', '29016', 'ES'),
-    ('guest131', 'Carlos', 'Morales Díaz', NULL, 'Avenida de la Huerta Nueva 50', 'Murcia', '30009', 'ES'),
-    ('guest132', 'Clara', 'Navarro Gallardo', NULL, 'Carrer de la Serra Blanca 51', 'Palma', '07013', 'ES'),
-    ('guest133', 'Daniel', 'Ortega Hernández', NULL, 'Calle del Atlántico Claro 52', 'Las Palmas de Gran Canaria', '35016', 'ES'),
-    ('guest134', 'Daniela', 'Pastor Marín', NULL, 'Calle de la Costa Serena 53', 'Alicante', '03008', 'ES'),
-    ('guest135', 'David', 'Prieto Montes', NULL, 'Calle del Nervión Verde 54', 'Bilbao', '48014', 'ES'),
-    ('guest136', 'Diego', 'Reyes Ortega', NULL, 'Rúa do Atlántico Norte 55', 'A Coruña', '15008', 'ES'),
-    ('guest137', 'Elena', 'Rubio Ramírez', NULL, 'Calle del Pisuerga Nuevo 56', 'Valladolid', '47014', 'ES'),
-    ('guest138', 'Elías', 'Sánchez Sáez', NULL, 'Rúa das Illas Atlánticas 57', 'Vigo', '36210', 'ES'),
-    ('guest139', 'Eva', 'Serrano Vargas', NULL, 'Calle del Cantábrico Norte 58', 'Gijón', '33212', 'ES'),
-    ('guest140', 'Fernando', 'Vargas Cabrera', NULL, 'Calle de Sierra Clara 59', 'Granada', '18015', 'ES'),
-    ('guest141', 'Gabriel', 'Alonso Díaz', NULL, 'Avenida del Teide Alto 60', 'Tenerife', '38009', 'ES'),
-    ('guest142', 'Gema', 'Blanco Gallardo', NULL, 'Calle de la Sierra Morena 61', 'Córdoba', '14011', 'ES'),
-    ('guest143', 'Guillermo', 'Campos Hernández', NULL, 'Calle de Navarra Central 62', 'Pamplona', '31008', 'ES'),
-    ('guest144', 'Héctor', 'Crespo Marín', NULL, 'Calle de la Bahía Alta 63', 'Santander', '39012', 'ES'),
-    ('guest145', 'Irene', 'Domínguez Montes', NULL, 'Calle del Tormes Claro 64', 'Salamanca', '37005', 'ES'),
-    ('guest146', 'Iván', 'Fernández Ortega', NULL, 'Calle de los Cigarrales Nuevos 65', 'Toledo', '45005', 'ES'),
-    ('guest147', 'Javier', 'Gallardo Ramírez', NULL, 'Calle del Arlanzón Norte 66', 'Burgos', '09006', 'ES'),
-    ('guest148', 'Jimena', 'Gómez Sáez', NULL, 'Calle del Ebro Riojano 67', 'Logroño', '26007', 'ES'),
-    ('guest149', 'Jorge', 'Gutiérrez Vargas', NULL, 'Calle del Naranco Nuevo 68', 'Oviedo', '33011', 'ES'),
-    ('guest150', 'Julia', 'Jiménez Cabrera', NULL, 'Avenida de la Bahía Serena 69', 'Cádiz', '11009', 'ES'),
-    ('guest151', 'Laura', 'Lorenzo Díaz', NULL, 'Calle del Prado Nuevo 70', 'Madrid', '28001', 'ES'),
-    ('guest152', 'Leire', 'Márquez Gallardo', NULL, 'Avenida de la Dehesa Alta 71', 'Madrid', '28023', 'ES'),
-    ('guest153', 'Leo', 'Medina Hernández', NULL, 'Carrer de la Marina Nova 72', 'Barcelona', '08012', 'ES'),
-    ('guest154', 'Lucía', 'Montes Marín', NULL, 'Carrer del Montseny Blau 73', 'Barcelona', '08027', 'ES'),
-    ('guest155', 'Manuel', 'Moya Montes', NULL, 'Carrer de l’Albufera Nova 74', 'Valencia', '46017', 'ES'),
-    ('guest156', 'Marc', 'Núñez Ortega', NULL, 'Carrer del Túria Vell 75', 'Valencia', '46022', 'ES'),
-    ('guest157', 'Marcos', 'Pascual Ramírez', NULL, 'Calle del Guadalquivir Alto 76', 'Sevilla', '41013', 'ES'),
-    ('guest158', 'María', 'Pérez Sáez', NULL, 'Calle de la Giralda Clara 77', 'Sevilla', '41020', 'ES'),
-    ('guest159', 'Martín', 'Ramos Vargas', NULL, 'Calle del Ebro Interior 78', 'Zaragoza', '50018', 'ES'),
-    ('guest160', 'Mateo', 'Romero Cabrera', NULL, 'Calle del Mediterráneo Sur 79', 'Málaga', '29016', 'ES'),
-    ('guest161', 'Marta', 'Sáez Díaz', NULL, 'Avenida de la Huerta Nueva 80', 'Murcia', '30009', 'ES'),
-    ('guest162', 'Miguel', 'Sanz Gallardo', NULL, 'Carrer de la Serra Blanca 81', 'Palma', '07013', 'ES'),
-    ('guest163', 'Nadia', 'Torres Hernández', NULL, 'Calle del Atlántico Claro 82', 'Las Palmas de Gran Canaria', '35016', 'ES'),
-    ('guest164', 'Nerea', 'Vega Marín', NULL, 'Calle de la Costa Serena 83', 'Alicante', '03008', 'ES'),
-    ('guest165', 'Nicolás', 'Benítez Montes', NULL, 'Calle del Nervión Verde 84', 'Bilbao', '48014', 'ES'),
-    ('guest166', 'Noelia', 'Calvo Ortega', NULL, 'Rúa do Atlántico Norte 85', 'A Coruña', '15008', 'ES'),
-    ('guest167', 'Óscar', 'Cortés Ramírez', NULL, 'Calle del Pisuerga Nuevo 86', 'Valladolid', '47014', 'ES'),
-    ('guest168', 'Pablo', 'Díaz Sáez', NULL, 'Rúa das Illas Atlánticas 87', 'Vigo', '36210', 'ES'),
-    ('guest169', 'Paula', 'Esteban Vargas', NULL, 'Calle del Cantábrico Norte 88', 'Gijón', '33212', 'ES'),
-    ('guest170', 'Raúl', 'Fuentes Cabrera', NULL, 'Calle de Sierra Clara 89', 'Granada', '18015', 'ES'),
-    ('guest171', 'Rebeca', 'Giménez Díaz', NULL, 'Avenida del Teide Alto 90', 'Tenerife', '38009', 'ES'),
-    ('guest172', 'Rocío', 'Guerrero Gallardo', NULL, 'Calle de la Sierra Morena 91', 'Córdoba', '14011', 'ES'),
-    ('guest173', 'Samuel', 'Iglesias Hernández', NULL, 'Calle de Navarra Central 92', 'Pamplona', '31008', 'ES'),
-    ('guest174', 'Sara', 'León Marín', NULL, 'Calle de la Bahía Alta 93', 'Santander', '39012', 'ES'),
-    ('guest175', 'Sergio', 'Marín Montes', NULL, 'Calle del Tormes Claro 94', 'Salamanca', '37005', 'ES'),
-    ('guest176', 'Silvia', 'Martínez Ortega', NULL, 'Calle de los Cigarrales Nuevos 95', 'Toledo', '45005', 'ES'),
-    ('guest177', 'Sofía', 'Molina Ramírez', NULL, 'Calle del Arlanzón Norte 96', 'Burgos', '09006', 'ES'),
-    ('guest178', 'Tomás', 'Moreno Sáez', NULL, 'Calle del Ebro Riojano 97', 'Logroño', '26007', 'ES'),
-    ('guest179', 'Valeria', 'Nieto Vargas', NULL, 'Calle del Naranco Nuevo 98', 'Oviedo', '33011', 'ES'),
-    ('guest180', 'Víctor', 'Ortiz Cabrera', NULL, 'Avenida de la Bahía Serena 99', 'Cádiz', '11009', 'ES'),
-    ('guest181', 'Adrián', 'Peña Díaz', NULL, 'Calle del Prado Nuevo 10', 'Madrid', '28001', 'ES'),
-    ('guest182', 'Alba', 'Ramírez Gallardo', NULL, 'Avenida de la Dehesa Alta 11', 'Madrid', '28023', 'ES'),
-    ('guest183', 'Alejandro', 'Rodríguez Hernández', NULL, 'Carrer de la Marina Nova 12', 'Barcelona', '08012', 'ES'),
-    ('guest184', 'Alicia', 'Ruiz Marín', NULL, 'Carrer del Montseny Blau 13', 'Barcelona', '08027', 'ES'),
-    ('guest185', 'Álvaro', 'Santiago Montes', NULL, 'Carrer de l’Albufera Nova 14', 'Valencia', '46017', 'ES'),
-    ('guest186', 'Ana', 'Suárez Ortega', NULL, 'Carrer del Túria Vell 15', 'Valencia', '46022', 'ES'),
-    ('guest187', 'Andrés', 'Vázquez Ramírez', NULL, 'Calle del Guadalquivir Alto 16', 'Sevilla', '41013', 'ES'),
-    ('guest188', 'Beatriz', 'Álvarez Sáez', NULL, 'Calle de la Giralda Clara 17', 'Sevilla', '41020', 'ES'),
-    ('guest189', 'Bruno', 'Cabrera Vargas', NULL, 'Calle del Ebro Interior 18', 'Zaragoza', '50018', 'ES'),
-    ('guest190', 'Carla', 'Castro Cabrera', NULL, 'Calle del Mediterráneo Sur 19', 'Málaga', '29016', 'ES'),
-    ('guest191', 'Carlos', 'Delgado Díaz', NULL, 'Avenida de la Huerta Nueva 20', 'Murcia', '30009', 'ES'),
-    ('guest192', 'Clara', 'Durán Gallardo', NULL, 'Carrer de la Serra Blanca 21', 'Palma', '07013', 'ES'),
-    ('guest193', 'Daniel', 'Flores Hernández', NULL, 'Calle del Atlántico Claro 22', 'Las Palmas de Gran Canaria', '35016', 'ES'),
-    ('guest194', 'Daniela', 'García Marín', NULL, 'Calle de la Costa Serena 23', 'Alicante', '03008', 'ES'),
-    ('guest195', 'David', 'González Montes', NULL, 'Calle del Nervión Verde 24', 'Bilbao', '48014', 'ES'),
-    ('guest196', 'Diego', 'Hernández Ortega', NULL, 'Rúa do Atlántico Norte 25', 'A Coruña', '15008', 'ES'),
-    ('guest197', 'Elena', 'Lara Ramírez', NULL, 'Calle del Pisuerga Nuevo 26', 'Valladolid', '47014', 'ES'),
-    ('guest198', 'Elías', 'Lozano Sáez', NULL, 'Rúa das Illas Atlánticas 27', 'Vigo', '36210', 'ES'),
-    ('guest199', 'Eva', 'Martín Vargas', NULL, 'Calle del Cantábrico Norte 28', 'Gijón', '33212', 'ES'),
-    ('guest200', 'Fernando', 'Méndez Cabrera', NULL, 'Calle de Sierra Clara 29', 'Granada', '18015', 'ES'),
-    ('guest201', 'Gabriel', 'Morales Díaz', NULL, 'Avenida del Teide Alto 30', 'Tenerife', '38009', 'ES'),
-    ('guest202', 'Gema', 'Navarro Gallardo', NULL, 'Calle de la Sierra Morena 31', 'Córdoba', '14011', 'ES'),
-    ('guest203', 'Guillermo', 'Ortega Hernández', NULL, 'Calle de Navarra Central 32', 'Pamplona', '31008', 'ES'),
-    ('guest204', 'Héctor', 'Pastor Marín', NULL, 'Calle de la Bahía Alta 33', 'Santander', '39012', 'ES'),
-    ('guest205', 'Irene', 'Prieto Montes', NULL, 'Calle del Tormes Claro 34', 'Salamanca', '37005', 'ES'),
-    ('guest206', 'Iván', 'Reyes Ortega', NULL, 'Calle de los Cigarrales Nuevos 35', 'Toledo', '45005', 'ES'),
-    ('guest207', 'Javier', 'Rubio Ramírez', NULL, 'Calle del Arlanzón Norte 36', 'Burgos', '09006', 'ES'),
-    ('guest208', 'Jimena', 'Sánchez Sáez', NULL, 'Calle del Ebro Riojano 37', 'Logroño', '26007', 'ES'),
-    ('guest209', 'Jorge', 'Serrano Vargas', NULL, 'Calle del Naranco Nuevo 38', 'Oviedo', '33011', 'ES'),
-    ('guest210', 'Julia', 'Vargas Cabrera', NULL, 'Avenida de la Bahía Serena 39', 'Cádiz', '11009', 'ES'),
-    ('guest211', 'Laura', 'Alonso Díaz', NULL, 'Calle del Prado Nuevo 40', 'Madrid', '28001', 'ES'),
-    ('guest212', 'Leire', 'Blanco Gallardo', NULL, 'Avenida de la Dehesa Alta 41', 'Madrid', '28023', 'ES'),
-    ('guest213', 'Leo', 'Campos Hernández', NULL, 'Carrer de la Marina Nova 42', 'Barcelona', '08012', 'ES'),
-    ('guest214', 'Lucía', 'Crespo Marín', NULL, 'Carrer del Montseny Blau 43', 'Barcelona', '08027', 'ES'),
-    ('guest215', 'Manuel', 'Domínguez Montes', NULL, 'Carrer de l’Albufera Nova 44', 'Valencia', '46017', 'ES'),
-    ('guest216', 'Marc', 'Fernández Ortega', NULL, 'Carrer del Túria Vell 45', 'Valencia', '46022', 'ES'),
-    ('guest217', 'Marcos', 'Gallardo Ramírez', NULL, 'Calle del Guadalquivir Alto 46', 'Sevilla', '41013', 'ES'),
-    ('guest218', 'María', 'Gómez Sáez', NULL, 'Calle de la Giralda Clara 47', 'Sevilla', '41020', 'ES'),
-    ('guest219', 'Martín', 'Gutiérrez Vargas', NULL, 'Calle del Ebro Interior 48', 'Zaragoza', '50018', 'ES'),
-    ('guest220', 'Mateo', 'Jiménez Cabrera', NULL, 'Calle del Mediterráneo Sur 49', 'Málaga', '29016', 'ES'),
-    ('guest221', 'Marta', 'Lorenzo Díaz', NULL, 'Avenida de la Huerta Nueva 50', 'Murcia', '30009', 'ES'),
-    ('guest222', 'Miguel', 'Márquez Gallardo', NULL, 'Carrer de la Serra Blanca 51', 'Palma', '07013', 'ES'),
-    ('guest223', 'Nadia', 'Medina Hernández', NULL, 'Calle del Atlántico Claro 52', 'Las Palmas de Gran Canaria', '35016', 'ES'),
-    ('guest224', 'Nerea', 'Montes Marín', NULL, 'Calle de la Costa Serena 53', 'Alicante', '03008', 'ES'),
-    ('guest225', 'Nicolás', 'Moya Montes', NULL, 'Calle del Nervión Verde 54', 'Bilbao', '48014', 'ES'),
-    ('guest226', 'Noelia', 'Núñez Ortega', NULL, 'Rúa do Atlántico Norte 55', 'A Coruña', '15008', 'ES'),
-    ('guest227', 'Óscar', 'Pascual Ramírez', NULL, 'Calle del Pisuerga Nuevo 56', 'Valladolid', '47014', 'ES'),
-    ('guest228', 'Pablo', 'Pérez Sáez', NULL, 'Rúa das Illas Atlánticas 57', 'Vigo', '36210', 'ES'),
-    ('guest229', 'Paula', 'Ramos Vargas', NULL, 'Calle del Cantábrico Norte 58', 'Gijón', '33212', 'ES'),
-    ('guest230', 'Raúl', 'Romero Cabrera', NULL, 'Calle de Sierra Clara 59', 'Granada', '18015', 'ES'),
-    ('guest231', 'Rebeca', 'Sáez Díaz', NULL, 'Avenida del Teide Alto 60', 'Tenerife', '38009', 'ES'),
-    ('guest232', 'Rocío', 'Sanz Gallardo', NULL, 'Calle de la Sierra Morena 61', 'Córdoba', '14011', 'ES'),
-    ('guest233', 'Samuel', 'Torres Hernández', NULL, 'Calle de Navarra Central 62', 'Pamplona', '31008', 'ES'),
-    ('guest234', 'Sara', 'Vega Marín', NULL, 'Calle de la Bahía Alta 63', 'Santander', '39012', 'ES'),
-    ('guest235', 'Sergio', 'Benítez Montes', NULL, 'Calle del Tormes Claro 64', 'Salamanca', '37005', 'ES'),
-    ('guest236', 'Silvia', 'Calvo Ortega', NULL, 'Calle de los Cigarrales Nuevos 65', 'Toledo', '45005', 'ES'),
-    ('guest237', 'Sofía', 'Cortés Ramírez', NULL, 'Calle del Arlanzón Norte 66', 'Burgos', '09006', 'ES'),
-    ('guest238', 'Tomás', 'Díaz Sáez', NULL, 'Calle del Ebro Riojano 67', 'Logroño', '26007', 'ES'),
-    ('guest239', 'Valeria', 'Esteban Vargas', NULL, 'Calle del Naranco Nuevo 68', 'Oviedo', '33011', 'ES'),
-    ('guest240', 'Víctor', 'Fuentes Cabrera', NULL, 'Avenida de la Bahía Serena 69', 'Cádiz', '11009', 'ES')
-) AS d(username, first_name, last_name, phone, address_line, city, postal_code, country_code)
-ON d.username = u.username
-ON CONFLICT (user_id) DO UPDATE SET
-    first_name = EXCLUDED.first_name,
-    last_name = EXCLUDED.last_name,
-    phone = EXCLUDED.phone,
-    address_line = EXCLUDED.address_line,
-    city = EXCLUDED.city,
-    postal_code = EXCLUDED.postal_code,
-    country_code = EXCLUDED.country_code;
-
-INSERT INTO user_roles (user_id, role_id)
+-- Assign roles to demo accounts.
+INSERT IGNORE INTO user_roles (user_id, role_id)
 SELECT u.id, r.id
-FROM users u
-JOIN roles r ON r.slug = CASE WHEN u.username LIKE 'user%' THEN 'user' ELSE 'guest' END
-WHERE u.username ~ '^(user|guest)[0-9]{3}$'
-ON CONFLICT DO NOTHING;
+FROM users AS u
+JOIN roles AS r ON r.slug = CASE
+    WHEN u.username = 'admin' THEN 'admin'
+    WHEN u.username = 'user' THEN 'user'
+    WHEN u.username = 'guest' THEN 'guest'
+    WHEN u.username REGEXP '^user[0-9]{3}$' THEN 'user'
+    WHEN u.username REGEXP '^guest[0-9]{3}$' THEN 'guest'
+END
+WHERE u.username IN ('admin', 'user', 'guest')
+   OR u.username REGEXP '^(user|guest)[0-9]{3}$';
