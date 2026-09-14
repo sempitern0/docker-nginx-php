@@ -254,11 +254,6 @@ function rate_limit_cleanup(int $maxAgeSeconds = 86400): void
         ->modify("-{$maxAgeSeconds} seconds")
         ->format('Y-m-d H:i:s');
 
-    $sql = sprintf(
-        'DELETE FROM rate_limits
-         WHERE last_attempt_at < ?',
-        $cutoff,
-    );
-
-    db()->exec($sql);
+    $stmt = db()->prepare('DELETE FROM rate_limits WHERE last_attempt_at < ?');
+    $stmt->execute([$cutoff]);
 }

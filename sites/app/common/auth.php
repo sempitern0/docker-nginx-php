@@ -34,11 +34,19 @@ function complete_mfa_login(int $userId): bool
     }
 
     $stmt = db()->prepare('
-        SELECT id, username, is_active, mfa_enabled, deleted_at
-        FROM users
-        WHERE id = ?
+        SELECT
+            u.id,
+            u.username,
+            u.is_active,
+            u.deleted_at,
+            COALESCE(m.is_enabled, 0) AS mfa_enabled
+        FROM users AS u
+        LEFT JOIN user_mfa AS m
+            ON m.user_id = u.id
+        WHERE u.id = ?
         LIMIT 1
     ');
+
     $stmt->execute([$userId]);
     $u = $stmt->fetch();
 
@@ -164,18 +172,18 @@ function login_user(string $username, string $password): string|bool
                     ->modify("+{$lockoutMins} minutes")
                     ->format('Y-m-d H:i:s');
 
-                $sql = sprintf(
+                $update = $pdo->prepare(
                     'UPDATE users
-                     SET failed_login_attempts = ?,
-                         locked_until = ?
-                     WHERE id = ?',
-                    $lockoutMins,
-                    $lockedUntil
-
+                        SET failed_login_attempts = ?,
+                            locked_until = ?
+                        WHERE id = ?'
                 );
 
-                $update = $pdo->prepare($sql);
-                $update->execute([$attempts, (int)$u['id']]);
+                $update->execute([
+                    $attempts,
+                    $lockedUntil,
+                    (int)$u['id'],
+                ]);
             } else {
                 $update = $pdo->prepare(
                     'UPDATE users
@@ -317,11 +325,24 @@ function current_user(): array
     }
 
     $stmt = db()->prepare(
-        'SELECT id, username, email, is_active, is_email_verified,
-                mfa_enabled, last_login_at, created_at
-         FROM users
-         WHERE id = ? AND deleted_at IS NULL
-         LIMIT 1'
+        'SELECT
+            u.id,
+            u.username,
+            u.email,
+            u.is_active,
+            CASE
+                WHEN u.email_verified_at IS NOT NULL THEN 1
+                ELSE 0
+            END AS is_email_verified,
+            COALESCE(m.is_enabled, 0) AS mfa_enabled,
+            u.last_login_at,
+            u.created_at
+        FROM users AS u
+        LEFT JOIN user_mfa AS m
+            ON m.user_id = u.id
+        WHERE u.id = ?
+            AND u.deleted_at IS NULL
+        LIMIT 1'
     );
     $stmt->execute([(int)$_SESSION['user_id']]);
     $user = $stmt->fetch();
