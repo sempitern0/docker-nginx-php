@@ -3,8 +3,8 @@
 BASE_DOMAIN ?= app.test
 
 CERT_DOMAINS ?= $(BASE_DOMAIN) *.$(BASE_DOMAIN)
-CERT_DIR ?= docker/nginx/certs
-CERT_NAME ?= app.test
+CERT_DIR ?= nginx/certs
+CERT_NAME ?= app
 
 CERT_SCRIPT_WINDOWS ?= scripts/generate_certs.ps1
 CERT_SCRIPT_UNIX ?= scripts/generate_certs.sh
@@ -52,9 +52,6 @@ RESET  := \033[0m
 	config \
 	images \
 	stats \
-	composer \
-	composer-install \
-	composer-update \
 	php-version \
 	php-extensions \
 	clean \
@@ -224,16 +221,6 @@ images: ## List Docker images used by the project
 
 stats: ## Show live container resource usage
 	docker stats
-
-
-composer: ## Run Composer inside the PHP container
-	$(COMPOSE) exec $(PHP_SERVICE) composer $(filter-out $@,$(MAKECMDGOALS))
-
-composer-install: ## Install Composer dependencies
-	$(COMPOSE) exec $(PHP_SERVICE) composer install
-
-composer-update: ## Update Composer dependencies
-	$(COMPOSE) exec $(PHP_SERVICE) composer update
 
 php-version: ## Show PHP version
 	$(COMPOSE) exec $(PHP_SERVICE) php -v
