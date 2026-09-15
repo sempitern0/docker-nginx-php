@@ -2,12 +2,17 @@ FROM php:8.4.25-fpm-alpine3.24
 
 RUN mv "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
-RUN apk add --no-cache tzdata libpq \
+RUN apk add --no-cache tzdata libpq msmtp \
     && apk add --no-cache --virtual .build-deps postgresql-dev \
     && docker-php-ext-install -j"$(nproc)" pdo_mysql pdo_pgsql pgsql \
     && apk del .build-deps \
     && docker-php-ext-enable opcache
 
+COPY --from=axllent/mailpit /mailpit /usr/local/bin/mailpit
+RUN { \
+        echo 'sendmail_path = /usr/local/bin/mailpit sendmail'; \
+    } > /usr/local/etc/php/conf.d/50-sendmail.ini
+    
 RUN { \
         echo '[www]'; \
         echo 'user = www-data'; \
