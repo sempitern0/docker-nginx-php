@@ -254,8 +254,6 @@ function login_user(string $username, string $password): string|bool
             true
         );
 
-
-
         return 'mfa_verify_required';
     }
 
@@ -270,6 +268,7 @@ function login_user(string $username, string $password): string|bool
          SET failed_login_attempts = 0, locked_until = NULL, last_login_at = NOW()
          WHERE id = ?'
     );
+
     $clearLock->execute([(int)$u['id']]);
 
     audit((int)$u['id'], $u['username'], 'auth.login.success', 'Inicio de sesión exitoso', true);

@@ -58,6 +58,7 @@ function verifyAndConsumeBackupCode(PDO $pdo, int $userId, string $inputCode): b
          FROM mfa_backup_codes
          WHERE user_id = ? AND used_at IS NULL'
     );
+
     $stmt->execute([$userId]);
 
     while ($record = $stmt->fetch(PDO::FETCH_ASSOC)) {

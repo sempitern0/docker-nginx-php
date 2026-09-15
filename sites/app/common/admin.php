@@ -34,7 +34,6 @@ function admin_daily_code(?DateTimeImmutable $now = null): string
     ), 0, 32);
 }
 
-
 function verify_admin_gate_code(string $providedCode): bool
 {
     $providedCode = trim($providedCode);
@@ -53,8 +52,6 @@ function verify_admin_gate_code(string $providedCode): bool
 
     return true;
 }
-
-
 function require_admin_gate(): void
 {
     if (session_status() === PHP_SESSION_NONE) {
@@ -82,14 +79,7 @@ function require_admin_gate(): void
 
 function has_admin_panel_access(): bool
 {
-    if (has_role(['admin', 'profesor'])) {
-        return true;
-    }
-
-    return has_permission([
-        'orders:read_all',
-        'products:read',
-    ]);
+    return has_role(['admin']);
 }
 
 /**
