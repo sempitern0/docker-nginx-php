@@ -83,22 +83,24 @@ function login_user(string $username, string $password): string|bool
     }
 
     $stmt = db()->prepare(
-        'SELECT 
-            id,
-            username,
-            email,
-            password_hash,
-            is_active,
-            email_verified_at,
-            failed_login_attempts,
-            locked_until,
-            mfa_enabled,
-            mfa_secret,
-            last_login_at,
-            created_at
-         FROM users
-         WHERE username = ? AND deleted_at IS NULL
-         LIMIT 1'
+        'SELECT
+        u.id,
+        u.username,
+        u.email,
+        u.password_hash,
+        u.is_active,
+        u.email_verified_at,
+        u.failed_login_attempts,
+        u.locked_until,
+        COALESCE(m.is_enabled, 0) AS mfa_enabled,
+        m.secret_encrypted AS mfa_secret_encrypted,
+        u.last_login_at,
+        u.created_at
+     FROM users AS u
+     LEFT JOIN user_mfa AS m
+        ON m.user_id = u.id
+     WHERE u.username = ? AND u.deleted_at IS NULL
+     LIMIT 1'
     );
 
     $stmt->execute([$username]);
@@ -234,7 +236,7 @@ function login_user(string $username, string $password): string|bool
         $_SESSION['mfa_pending_user_id'] = (int)$u['id'];
         $_SESSION['mfa_pending_at'] = time();
 
-        if (empty($u['mfa_secret'])) {
+        if (empty($u['mfa_secret_encrypted'])) {
             audit(
                 (int)$u['id'],
                 $u['username'],
