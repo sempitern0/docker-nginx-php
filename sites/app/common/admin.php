@@ -2,95 +2,113 @@
 
 declare(strict_types=1);
 
-/**
- * Devuelve la fecha local de la aplicación usada para rotar el código diario.
- */
-function admin_gate_date(): string
+final class Admin
 {
-    $timezone = new DateTimeZone((string)config('app.timezone', 'UTC'));
-    return (new DateTimeImmutable('now', $timezone))->format('Y-m-d');
-}
+    private function __construct() {}
 
-/**
- * Código determinista diario derivado de un secreto fuera del repositorio.
- * 128 bits truncados de HMAC-SHA-256.
- */
-function admin_daily_code(?DateTimeImmutable $now = null): string
-{
-    $secret = (string)config('security.admin_gate_secret', '');
+    public static function gateDate(): string
+    {
+        $timezone = new DateTimeZone(
+            (string)Helpers::config('app.timezone', 'UTC')
+        );
 
-    if (strlen($secret) < 32) {
-        throw new RuntimeException('security.admin_gate_secret debe contener al menos 32 bytes.');
+        return (new DateTimeImmutable('now', $timezone))->format('Y-m-d');
     }
 
-    $timezone = new DateTimeZone((string)config('app.timezone', 'UTC'));
-    $now ??= new DateTimeImmutable('now', $timezone);
-    $date = $now->setTimezone($timezone)->format('Y-m-d');
+    public static function dailyCode(?DateTimeImmutable $now = null): string
+    {
+        $secret = (string)Helpers::config('security.admin_gate_secret', '');
 
-    return substr(hash_hmac(
-        'sha256',
-        "admin-gate|$date",
-        $secret
-    ), 0, 32);
-}
+        if (strlen($secret) < 32) {
+            throw new RuntimeException(
+                'security.admin_gate_secret debe contener al menos 32 bytes.'
+            );
+        }
 
-function verify_admin_gate_code(string $providedCode): bool
-{
-    $providedCode = trim($providedCode);
-    $expectedCode = admin_daily_code();
+        $timezone = new DateTimeZone(
+            (string)Helpers::config('app.timezone', 'UTC')
+        );
+        $now ??= new DateTimeImmutable('now', $timezone);
+        $date = $now->setTimezone($timezone)->format('Y-m-d');
 
-    if (strlen($providedCode) !== strlen($expectedCode)) {
-        return false;
+        return substr(
+            hash_hmac(
+                'sha256',
+                "admin-gate|$date",
+                $secret
+            ),
+            0,
+            32
+        );
     }
 
-    if (!hash_equals($expectedCode, $providedCode)) {
-        return false;
+    public static function verifyGateCode(string $providedCode): bool
+    {
+        $providedCode = trim($providedCode);
+        $expectedCode = self::dailyCode();
+
+        if (strlen($providedCode) !== strlen($expectedCode)) {
+            return false;
+        }
+
+        if (!hash_equals($expectedCode, $providedCode)) {
+            return false;
+        }
+
+        if (session_status() === PHP_SESSION_NONE) {
+            Session::start();
+        }
+
+        $_SESSION['admin_gate_date'] = self::gateDate();
+        $_SESSION['admin_gate_verified_at'] = time();
+
+        return true;
     }
 
-    $_SESSION['admin_gate_date'] = admin_gate_date();
-    $_SESSION['admin_gate_verified_at'] = time();
+    public static function requireGate(): void
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            Session::start();
+        }
 
-    return true;
-}
-function require_admin_gate(): void
-{
-    if (session_status() === PHP_SESSION_NONE) {
-        start_secure_session();
+        $today = self::gateDate();
+        $providedCode = (string)($_POST['code'] ?? '');
+
+        if ($providedCode !== '' && self::verifyGateCode($providedCode)) {
+            return;
+        }
+
+        $verifiedDate = (string)($_SESSION['admin_gate_date'] ?? '');
+        $verifiedAt = (int)($_SESSION['admin_gate_verified_at'] ?? 0);
+        $timeout = max(
+            1,
+            (int)Helpers::config('security.admin_gate_timeout', 3600)
+        );
+
+        if (
+            $verifiedDate === $today
+            && $verifiedAt > 0
+            && time() - $verifiedAt <= $timeout
+        ) {
+            return;
+        }
+
+        http_response_code(404);
+        exit('Not Found');
     }
 
-    $today = admin_gate_date();
-    $providedCode = (string)($_POST['code'] ?? '');
-
-    if ($providedCode !== '' && verify_admin_gate_code($providedCode)) {
-        return;
+    public static function hasPanelAccess(): bool
+    {
+        return Rbac::hasRole(['admin']);
     }
 
-    if (
-        $_SESSION['admin_gate_date'] === $today
-        && time() - (int)$_SESSION['admin_gate_verified_at']
-        <= config('security.admin_gate_timeout', 3600)
-    ) {
-        return;
-    }
+    public static function requireRoute(): void
+    {
+        Auth::requireLogin();
+        self::requireGate();
 
-    http_response_code(404);
-    exit('Not Found');
-}
-
-function has_admin_panel_access(): bool
-{
-    return has_role(['admin']);
-}
-
-/**
- * Guard común para todas las páginas administrativas distintas del index.
- */
-function require_admin_route(): void
-{
-    require_login();
-    require_admin_gate();
-
-    if (!has_admin_panel_access()) {
-        redirect('/');
+        if (!self::hasPanelAccess()) {
+            Helpers::redirect('/');
+        }
     }
 }
