@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 final class Session
 {
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     public static function start(): void
     {

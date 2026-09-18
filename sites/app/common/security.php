@@ -355,11 +355,11 @@ final class Security
     }
 
     /**
-     * Validate a forum URL.
+     * Validate an URL.
      *
      * Only HTTP and HTTPS URLs are allowed.
      */
-    public static function isValidForumUrl(
+    public static function isValidURL(
         string $url
     ): bool {
         $url = trim($url);
@@ -426,7 +426,7 @@ final class Security
         }
 
         /*
-         * Never allow credentials in forum links.
+         * Never allow credentials in links.
          *
          * Rejected:
          * https://user:password@example.com/
@@ -468,7 +468,7 @@ final class Security
      *
      * @return array{0: string, 1: string}
      */
-    public static function splitForumUrlTrailingPunctuation(
+    public static function splitUrlTrailingPunctuation(
         string $candidate
     ): array {
         $url = $candidate;
@@ -538,7 +538,7 @@ final class Security
      *
      * @return array<int, string>
      */
-    public static function validateForumUrls(
+    public static function validateUrls(
         string $text
     ): array {
         $errors = [];
@@ -561,12 +561,12 @@ final class Security
 
         foreach ($matches[0] as $candidate) {
             [$url] =
-                self::splitForumUrlTrailingPunctuation(
+                self::splitUrlTrailingPunctuation(
                     (string)$candidate
                 );
 
             if (
-                !self::isValidForumUrl($url)
+                !self::isValidURL($url)
             ) {
                 $errors[] =
                     'One or more links are invalid or not allowed. ' .

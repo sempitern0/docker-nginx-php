@@ -4,9 +4,7 @@ declare(strict_types=1);
 
 final class Auth
 {
-    private function __construct()
-    {
-    }
+    private function __construct() {}
 
     public static function establishAuthenticatedSession(
         int $userId,
@@ -104,7 +102,7 @@ final class Auth
     {
         $username = trim($username);
 
-        if ($username === '') {
+        if (empty($usrename)) {
             return 'Credenciales incorrectas.';
         }
 
@@ -383,6 +381,7 @@ final class Auth
                         $_SESSION['mfa_pending_user_id'],
                         $_SESSION['mfa_pending_at']
                     );
+
                     Helpers::redirect('index.php');
                 }
 
