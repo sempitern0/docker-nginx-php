@@ -62,7 +62,6 @@ RUN { \
     } > /usr/local/etc/php/conf.d/99-security.ini
 
 WORKDIR /usr/share/nginx/html
-COPY sites /usr/share/nginx/html
 
 RUN php -m | grep -q '^PDO$' \
     && php -m | grep -q '^pdo_mysql$' \

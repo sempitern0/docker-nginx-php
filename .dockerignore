@@ -1,0 +1,16 @@
+.git
+.github
+nginx/certs
+storage
+*.log
+*.sql.gz
+*.dump
+coverage
+vendor
+node_modules
+.env
+.env.*
+README.md
+CONTRIBUTING.md
+SECURITY.md
+Makefile

@@ -133,7 +133,7 @@ services:
       MARIADB_USER: ${DB_USER:-ca_user}
       MARIADB_PASSWORD: ${DB_PASSWORD}
       MARIADB_ROOT_PASSWORD: ${DB_ROOT_PASSWORD}
-      DB_ALLOW_EMPTY_PASSWORD: ${DB_ALLOW_EMPTY_PASSWORD:-no}
+      MARIADB_ALLOW_EMPTY_ROOT_PASSWORD: ${DB_ALLOW_EMPTY_PASSWORD:-no}
     volumes:
       - mariadb_data:/var/lib/mysql
       - ./database/mysql:/docker-entrypoint-initdb.d:ro

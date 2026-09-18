@@ -102,7 +102,7 @@ final class Auth
     {
         $username = trim($username);
 
-        if (empty($usrename)) {
+        if (empty($username)) {
             return 'Credenciales incorrectas.';
         }
 
@@ -171,7 +171,7 @@ final class Auth
                 false
             );
 
-            return 'Cuenta desactivada.';
+            return 'Credenciales incorrectas.';
         }
 
         if (
@@ -186,7 +186,7 @@ final class Auth
                 false
             );
 
-            return 'Cuenta bloqueada temporalmente. Inténtalo más tarde.';
+            return 'Credenciales incorrectas.';
         }
 
         if (!password_verify($password, (string)$user['password_hash'])) {
